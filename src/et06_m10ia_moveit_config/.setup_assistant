@@ -1,0 +1,25 @@
+moveit_setup_assistant_config:
+  urdf:
+    package: moveit_resources_fanuc_description
+    relative_path: urdf/fanuc.urdf
+  srdf:
+    relative_path: config/fanuc.srdf
+  package_settings:
+    author_name: Antoine Meunier
+    author_email: antoine.meunier@eia.edu.co
+    generated_timestamp: 1788716334
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
+  modified_urdf:
+    xacros:
+      - control_xacro
+  control_xacro:
+    command:
+      - position
+    state:
+      - position
+      - velocity
