@@ -1,0 +1,41 @@
+# Donnees du projet : metres, radians, quaternion dans l'ordre xyzw.
+# Fichier de donnees ; ce n'est pas un fichier de parametres ROS.
+# Les solutions PICK/PLACE ont ete verifiees par DH et MoveIt.
+# IK obtenue pour les poses d'approche.
+# Trajectoires et collisions avec la scene finale restant a verifier.
+
+frame_id: base_link
+planning_group: manipulator
+tool_link: tool0
+
+joint_names:
+  - joint_1
+  - joint_2
+  - joint_3
+  - joint_4
+  - joint_5
+  - joint_6
+
+home:
+  joints: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+pick:
+  position: [0.75, -0.30, 0.85]
+  quaternion_xyzw: [1.0, 0.0, 0.0, 0.0]
+  joints: [-0.38050638088717653, -0.008753653785249053, -0.46129981068573, 1.1647952226565548e-09, -1.1182501711547923, 0.38050638018104654]
+
+place:
+  position: [0.75, 0.30, 0.85]
+  quaternion_xyzw: [1.0, 0.0, 0.0, 0.0]
+  joints: [0.38050578298679605, -0.008752906279149665, -0.46130350259048086, 4.958048048952841e-11, -1.1182457324839004, -0.38050578321996226]
+
+pre_pick:
+  position: [0.75, -0.30, 0.95]
+  quaternion_xyzw: [1.0, 0.0, 0.0, 0.0]
+  joints: [-0.38050637698478285, -0.02124735102936704, -0.3239302426678461, 1.0796567803976544e-09, -1.2681134364167943, 0.38050637647294266]
+
+pre_place:
+  position: [0.75, 0.30, 0.95]
+  quaternion_xyzw: [1.0, 0.0, 0.0, 0.0]
+  joints: [0.38050637711779534, -0.02124735090670198, -0.32393024254751374, 4.5954919371674276e-11, -1.2681134371544196, -0.3805063773426905]
+

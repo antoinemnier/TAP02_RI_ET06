@@ -1,0 +1,31 @@
+{
+  "trial": 1,
+  "planner": "RRTstar",
+  "pipeline": "ompl",
+  "allowed_planning_time_s": 5.0,
+  "velocity_scaling": 0.1,
+  "acceleration_scaling": 0.1,
+  "start_joints": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "goal_joints": [
+    -0.38050637698478285,
+    -0.02124735102936704,
+    -0.3239302426678461,
+    1.0796567803976544e-09,
+    -1.2681134364167943,
+    0.38050637647294266
+  ],
+  "error_code": 99999,
+  "error_message": "",
+  "error_source": "",
+  "planning_time_s": 0.0,
+  "service_wall_time_s": 5.006852406000689,
+  "joint_names": [],
+  "points": []
+}
