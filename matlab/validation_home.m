@@ -329,6 +329,196 @@ assert(eR_place < 1e-8, ...
 
 disp('Validation numerique de PLACE reussie.');
 
+%% Verification du chemin cartesien retourne par MoveIt
+
+D = jsondecode(fileread("pre_pick_to_pick.json"));
+
+% Verifier l'ordre des articulations avant d'utiliser le modele DH.
+expected_names = "joint_" + string((1:6)');
+actual_names = string(D.joint_names);
+assert(isequal(actual_names(:), expected_names), ...
+    'Ordre des articulations different : reordonner les donnees.');
+
+N = numel(D.points);
+P = zeros(N,3);
+time = zeros(N,1);
+orientation_error = zeros(N,1);
+
+% Orientation souhaitee : quaternion xyzw = [1,0,0,0].
+R_target = diag([1,-1,-1]);
+
+for k = 1:N
+    q = D.points(k).positions(:);
+    T = fk_dh(q);
+
+    P(k,:) = T(1:3,4)';
+    time(k) = D.points(k).time_s;
+
+    orientation_error(k) = norm( ...
+        T(1:3,1:3) - R_target, 'fro');
+end
+
+% Ecart transversal par rapport a la droite x=0.75, y=-0.30.
+transverse_error = sqrt( ...
+    (P(:,1)-0.75).^2 + (P(:,2)+0.30).^2);
+
+p_start = [0.75,-0.30,0.95];
+p_end = [0.75,-0.30,0.85];
+
+fprintf('\n=== Chemin cartesien MoveIt ===\n');
+fprintf('Nombre de points : %d\n', N);
+fprintf('Duree provisoire MoveIt : %.6f s\n', time(end)-time(1));
+fprintf('Erreur position initiale : %.9g m\n', ...
+    norm(P(1,:)-p_start));
+fprintf('Erreur position finale : %.9g m\n', ...
+    norm(P(end,:)-p_end));
+fprintf('Ecart transversal maximal : %.9g m\n', ...
+    max(transverse_error));
+fprintf('Ecart orientation maximal, Frobenius : %.9g\n', ...
+    max(orientation_error));
+
+% Une descente monotone correspond a des differences z <= 0.
+fprintf('Plus grande variation de z entre points : %.9g m\n', ...
+    max(diff(P(:,3))));
+
+figure;
+tiledlayout(2,1);
+
+nexttile;
+plot(time, P(:,3), 'o-', 'LineWidth', 1.2);
+grid on;
+xlabel('Temps provisoire MoveIt [s]');
+ylabel('z [m]');
+title('Approche cartesienne : positions retournees');
+
+nexttile;
+plot(time, 1000*transverse_error, 'o-', 'LineWidth', 1.2);
+grid on;
+xlabel('Temps provisoire MoveIt [s]');
+ylabel('Ecart transversal [mm]');
+title('Ecart a la droite x=0.75, y=-0.30');
+
+%% Export du chemin articulaire en fonction de l'avancement
+
+% P et D ont ete calcules dans la section precedente.
+% Progression normalisee selon la hauteur effectivement obtenue.
+s_path = (P(1,3) - P(:,3)) / (P(1,3) - P(end,3));
+
+% Verifications avant interpolation.
+assert(all(diff(s_path) > 0), ...
+    'La progression du chemin doit etre strictement croissante.');
+
+Q_path = zeros(N,6);
+
+for k = 1:N
+    Q_path(k,:) = D.points(k).positions(:)';
+end
+
+path_table = array2table( ...
+    [s_path, Q_path], ...
+    'VariableNames', ...
+    {'s','joint_1','joint_2','joint_3', ...
+    'joint_4','joint_5','joint_6'});
+
+writetable(path_table, 'pre_pick_to_pick_path.csv');
+
+disp('Chemin exporte : pre_pick_to_pick_path.csv');
+disp(path_table([1,end],:));
+
+%% Verification cartesienne des profils reparametres
+% Verification echantillonnee, hors execution.
+% Vitesses et accelerations estimees par differences finies.
+
+files = {'cubic_red_joints.csv', 'quintic_red_joints.csv'};
+labels = {'Cubique', 'Quintique'};
+
+figure;
+tiledlayout(3,1);
+
+for profile = 1:2
+    M = readmatrix(files{profile});
+
+    t = M(:,1);
+    q = M(:,2:7);
+    n = numel(t);
+
+    assert(all(diff(t) > 0), ...
+        'Les temps doivent etre strictement croissants.');
+
+    P = zeros(n,3);
+    rotation_error = zeros(n,1);
+    R_target = diag([1,-1,-1]);
+
+    for k = 1:n
+        T = fk_dh(q(k,:)');
+        P(k,:) = T(1:3,4)';
+
+        rotation_error(k) = norm( ...
+            T(1:3,1:3) - R_target, 'fro');
+    end
+
+    % Derivees numeriques de la position cartesienne.
+    V = zeros(n,3);
+    A = zeros(n,3);
+
+    for axis = 1:3
+        V(:,axis) = gradient(P(:,axis), t);
+        A(:,axis) = gradient(V(:,axis), t);
+    end
+
+    speed = sqrt(sum(V.^2,2));
+    acceleration = sqrt(sum(A.^2,2));
+
+    transverse_error = sqrt( ...
+        (P(:,1)-0.75).^2 + (P(:,2)+0.30).^2);
+
+    % Ecarter deux points a chaque extremite pour les maxima
+    % d'acceleration numerique : les bords sont moins precis.
+    interior = 3:n-2;
+
+    fprintf('\n=== %s : verification cartesienne ===\n', labels{profile});
+    fprintf('Duree : %.6f s\n', t(end)-t(1));
+    fprintf('Ecart transversal maximal : %.9g m\n', ...
+        max(transverse_error));
+    fprintf('Erreur finale de position : %.9g m\n', ...
+        norm(P(end,:)-[0.75,-0.30,0.85]));
+    fprintf('Ecart orientation maximal, Frobenius : %.9g\n', ...
+        max(rotation_error));
+    fprintf('Vitesse cartesienne maximale estimee : %.9g m/s\n', ...
+        max(speed));
+    fprintf('Acceleration maximale estimee hors bords : %.9g m/s2\n', ...
+        max(acceleration(interior)));
+
+    nexttile(1);
+    plot(t, P(:,3), 'LineWidth', 1.5);
+    hold on;
+    grid on;
+    ylabel('z [m]');
+    title('Approche apres reparametrisation articulaire');
+
+    nexttile(2);
+    plot(t, speed, 'LineWidth', 1.5);
+    hold on;
+    grid on;
+    ylabel('Norme vitesse [m/s]');
+
+    nexttile(3);
+    plot(t, acceleration, 'LineWidth', 1.5);
+    hold on;
+    grid on;
+    ylabel('Norme acceleration [m/s^2]');
+    xlabel('Temps [s]');
+end
+
+nexttile(1);
+legend(labels, 'Location', 'best');
+
+nexttile(2);
+yline(0.200, 'k:', 'Limite rouge');
+
+nexttile(3);
+yline(0.300, 'k:', 'Limite rouge');
+
 %% Fonctions locales
 
 function T = fk_dh(q)
