@@ -1,0 +1,60 @@
+
+=== RRTConnect ===
+Succes : 10/10
+Codes retour : {1: 10}
+
+Tous les essais :
+  Temps total appel [s] : mediane=0.129567, min=0.0394269, max=1.34478
+
+Essais reussis uniquement :
+  Temps rapporte MoveIt [s] : mediane=0.033116, min=0.0215771, max=0.04809
+  Longueur articulaire [rad] : mediane=3.34373, min=1.82226, max=5.21737
+  Duree trajectoire [s] : mediane=13.6432, min=10.3482, max=18.1586
+  Norme acceleration articulaire RMS [rad/s^2] : mediane=0.130401, min=0.119857, max=0.185662
+  Trajectoires avec accelerations exploitables : 10/10
+
+Detail des echecs :
+  Aucun.
+
+=== RRTstar ===
+Succes : 1/10
+Codes retour : {99999: 9, 1: 1}
+
+Tous les essais :
+  Temps total appel [s] : mediane=5.01455, min=5.00796, max=5.03271
+
+Essais reussis uniquement :
+  Temps rapporte MoveIt [s] : mediane=5.00944, min=5.00944, max=5.00944
+  Longueur articulaire [rad] : mediane=1.88414, min=1.88414, max=1.88414
+  Duree trajectoire [s] : mediane=10.4494, min=10.4494, max=10.4494
+  Norme acceleration articulaire RMS [rad/s^2] : mediane=0.129841, min=0.129841, max=0.129841
+  Trajectoires avec accelerations exploitables : 1/1
+
+Detail des echecs :
+  Essai 01 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 03 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 04 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 05 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 06 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 07 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 08 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 09 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''
+  Essai 10 : code=99999, points=0, temps=0.000000 s
+    message=''
+    source=''

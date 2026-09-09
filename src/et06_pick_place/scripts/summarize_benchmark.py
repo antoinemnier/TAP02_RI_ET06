@@ -29,7 +29,36 @@ def report_metric(label, values):
         f"max={max(values):.6g}"
     )
 
+def acceleration_rms(points):
+    if len(points) < 2:
+        return None
 
+    joint_count = len(points[0]["positions"])
+    if joint_count == 0:
+        return None
+
+    for p in points:
+        if len(p["accelerations"]) != joint_count:
+            return None
+        if not all(math.isfinite(a) for a in p["accelerations"]):
+            return None
+
+    duration = points[-1]["time_s"] - points[0]["time_s"]
+    if duration <= 0:
+        return None
+
+    integral = 0.0
+
+    for p, q in zip(points[:-1], points[1:]):
+        dt = q["time_s"] - p["time_s"]
+        if dt <= 0:
+            return None
+
+        a2_start = sum(a * a for a in p["accelerations"])
+        a2_end = sum(a * a for a in q["accelerations"])
+        integral += 0.5 * (a2_start + a2_end) * dt
+
+    return math.sqrt(integral / duration)
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
@@ -80,6 +109,22 @@ def main():
             durations.append(last_time - first_time)
 
         report_metric("Duree trajectoire [s]", durations)
+        rms_values = []
+
+        for r in successful:
+            value = acceleration_rms(r["points"])
+            if value is not None:
+                rms_values.append(value)
+
+        report_metric(
+            "Norme acceleration articulaire RMS [rad/s^2]",
+            rms_values,
+        )
+
+        print(
+            f"  Trajectoires avec accelerations exploitables : "
+            f"{len(rms_values)}/{len(successful)}"
+        )
         print("\nDetail des echecs :")
         failures = [
             r for r in runs
