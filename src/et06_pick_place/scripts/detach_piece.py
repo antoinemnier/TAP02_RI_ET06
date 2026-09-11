@@ -166,5 +166,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nProgramme interrompu.")
+        raise SystemExit(130)
     except Exception as error:
         print(f"\nARRET : {error}")
+        raise SystemExit(1)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import yaml
-
+import os
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
@@ -106,10 +106,14 @@ def main():
         print(f"Duree du transfert : {duration:.6f} s")
         print("SIMULATION UNIQUEMENT. Ne pas modifier la scene.")
 
-        answer = input("Taper OUI pour executer le transfert : ")
-        if answer.strip() != "OUI":
-            print("Annule : aucun mouvement commande.")
-            return
+        if os.environ.get("ET06_AUTO_CONFIRM") != "1":
+            answer = input(
+                "Taper OUI pour executer le transfert : "
+            )
+            if answer.strip().upper() != "OUI":
+                raise RuntimeError("Execution annulee par l'utilisateur.")
+        else:
+            print("Execution autorisee par le programme principal.")
 
         # Verifier que le robot n'a pas bouge pendant la confirmation.
         check_position(node, names, start, 0.001)
@@ -141,5 +145,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nProgramme interrompu.")
+        raise SystemExit(130)
     except Exception as error:
         print(f"\nARRET : {error}")
+        raise SystemExit(1)

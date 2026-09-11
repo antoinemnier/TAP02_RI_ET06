@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import os
 from pathlib import Path
 import csv
 import math
@@ -153,13 +153,14 @@ def main():
             "La piece doit rester attachee pendant la descente."
         )
 
-        answer = input(
-            "Taper OUI pour executer le depot : "
-        )
-
-        if answer.strip() != "OUI":
-            print("Annule : aucun mouvement commande.")
-            return
+        if os.environ.get("ET06_AUTO_CONFIRM") != "1":
+            answer = input(
+                "Taper OUI pour executer le depot : "
+            )
+            if answer.strip().upper() != "OUI":
+                raise RuntimeError("Execution annulee par l'utilisateur.")
+        else:
+            print("Execution autorisee par le programme principal.")
 
         check_position(
             node,
@@ -210,5 +211,7 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         print("\nProgramme interrompu.")
+        raise SystemExit(130)
     except Exception as error:
         print(f"\nARRET : {error}")
+        raise SystemExit(1)
