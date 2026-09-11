@@ -8,7 +8,7 @@ from rclpy.node import Node
 from geometry_msgs.msg import Pose
 from moveit_msgs.srv import GetCartesianPath
 
-from check_scene import call_service
+from setup_scene import call_service
 
 
 def main():

@@ -10,37 +10,37 @@ SCRIPTS_FOLDER = Path(__file__).resolve().parent
 STEPS = [
     (
         "Creation et verification de la scene",
-        "check_scene.py",
+        "setup_scene.py",
         False,
     ),
     (
         "HOME -> PRE_PICK -> PICK",
-        "execute_pick.py",
+        "execute_pick_approach.py",
         True,
     ),
     (
         "Attachement de la piece",
-        "attach_piece.py",
+        "attach_workpiece.py",
         False,
     ),
     (
         "Decollage de la piece",
-        "lift_piece.py",
+        "lift_workpiece.py",
         True,
     ),
     (
         "Transport vers PRE_PLACE",
-        "transfer_piece.py",
+        "transfer_workpiece.py",
         True,
     ),
     (
         "Approche de depot",
-        "execute_place.py",
+        "execute_place_approach.py",
         True,
     ),
     (
         "Detachement de la piece",
-        "detach_piece.py",
+        "detach_workpiece.py",
         False,
     ),
 ]

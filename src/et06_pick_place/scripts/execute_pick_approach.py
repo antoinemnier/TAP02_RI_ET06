@@ -17,7 +17,7 @@ from moveit_msgs.msg import RobotTrajectory, Constraints, JointConstraint
 from moveit_msgs.srv import GetMotionPlan
 from moveit_msgs.action import ExecuteTrajectory
 
-from check_scene import call_service
+from setup_scene import call_service
 
 
 def current_positions(node, names):

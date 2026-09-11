@@ -10,9 +10,9 @@ from moveit_msgs.msg import Constraints, JointConstraint
 from moveit_msgs.srv import GetPlanningScene, GetMotionPlan
 from moveit_msgs.action import ExecuteTrajectory
 
-from attach_piece import read_scene
-from check_scene import call_service
-from execute_pick import check_position, execute
+from attach_workpiece import read_scene
+from setup_scene import call_service
+from execute_pick_approach import check_position, execute
 
 
 def main():

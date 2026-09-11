@@ -11,7 +11,7 @@ from rclpy.node import Node
 from moveit_msgs.msg import Constraints, JointConstraint
 from moveit_msgs.srv import GetMotionPlan
 
-from check_scene import call_service
+from setup_scene import call_service
 
 
 def main():

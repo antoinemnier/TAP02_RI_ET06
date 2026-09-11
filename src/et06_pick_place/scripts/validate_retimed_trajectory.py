@@ -7,7 +7,7 @@ import rclpy
 from rclpy.node import Node
 from moveit_msgs.srv import GetStateValidity
 
-from check_scene import call_service
+from setup_scene import call_service
 
 
 def main():

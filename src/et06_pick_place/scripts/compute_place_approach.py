@@ -8,9 +8,9 @@ from rclpy.node import Node
 from geometry_msgs.msg import Pose
 from moveit_msgs.srv import GetPlanningScene, GetCartesianPath
 
-from attach_piece import read_scene
-from check_scene import call_service
-from execute_pick import check_position
+from attach_workpiece import read_scene
+from setup_scene import call_service
+from execute_pick_approach import check_position
 
 
 def main():

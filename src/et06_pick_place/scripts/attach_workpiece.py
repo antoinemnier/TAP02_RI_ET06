@@ -11,8 +11,8 @@ from moveit_msgs.msg import PlanningSceneComponents
 from moveit_msgs.srv import GetPlanningScene, ApplyPlanningScene
 from moveit_msgs.srv import GetStateValidity
 
-from check_scene import call_service
-from execute_pick import check_position
+from setup_scene import call_service
+from execute_pick_approach import check_position
 
 
 def read_scene(node, client):
