@@ -59,6 +59,7 @@ def acceleration_rms(points):
         integral += 0.5 * (a2_start + a2_end) * dt
 
     return math.sqrt(integral / duration)
+
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
