@@ -69,10 +69,10 @@ def run_step(number, title, filename, needs_confirmation):
 
     if result.returncode != 0:
         raise RuntimeError(
-            f"Echec de l'etape {number} : {title}"
+            f"Step {number} failed : {title}"
         )
 
-    print(f"Step {number} terminee.")
+    print(f"Step {number} completed.")
 
 
 def main():

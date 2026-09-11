@@ -140,7 +140,7 @@ def main():
             )
             print(f"Total service-call time : {elapsed:.6f} s")
             print(f"Number of returned points : {len(points)}")
-            print(f"Fichier : {output_file.name}")
+            print(f"File : {output_file.name}")
 
             if result.error_code.val == 1 and points:
                 successes[planner] += 1
@@ -152,8 +152,8 @@ def main():
         for planner, count in successes.items():
             print(f"{planner} : {count}/10 succes")
 
-        print(f"Results sauvegardes dans : {output_dir}")
-        print("Aucune execution de mouvement demandee.")
+        print(f"Results saved in : {output_dir}")
+        print("No motion execution was requested.")
 
     finally:
         node.destroy_node()
