@@ -8,7 +8,7 @@ from moveit_msgs.msg import CollisionObject
 from moveit_msgs.srv import ApplyPlanningScene, GetStateValidity
 
 # Reutilise les fonctions du script voisin, sans executer son main().
-from check_scene import box, call_service
+from setup_scene import box, call_service
 
 
 def main():
