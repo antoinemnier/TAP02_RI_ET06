@@ -131,7 +131,7 @@ def main():
             )
 
         print("Aucun mouvement commande.")
-        print("La piece reste attachee, meme si l'etat est invalide.")
+        print("La piece reste attachee a la fin du programme.")
 
     finally:
         node.destroy_node()
