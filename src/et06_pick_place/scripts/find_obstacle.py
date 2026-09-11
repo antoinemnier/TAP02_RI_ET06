@@ -7,7 +7,7 @@ from rclpy.node import Node
 from moveit_msgs.msg import CollisionObject
 from moveit_msgs.srv import ApplyPlanningScene, GetStateValidity
 
-# Reutilise les fonctions du script voisin, sans executer son main().
+# Reuse functions from the neighboring script without running main().
 from setup_scene import box, call_service
 
 
@@ -33,7 +33,7 @@ def main():
         GetStateValidity, "/check_state_validity"
     )
 
-    # Derniere geometrie connue, restauree si aucune candidate ne convient.
+    # Last known geometry, restored if no candidate is suitable.
     original_center = [0.55, -0.22, 0.975]
     original_size = [0.08, 0.08, 0.35]
     selected = False
@@ -45,7 +45,7 @@ def main():
         req.scene.world.collision_objects = [obj]
         result = call_service(node, apply_client, req)
         if not result.success:
-            raise RuntimeError("Modification de scene refusee.")
+            raise RuntimeError("The planning-scene modification was rejected.")
 
     def place_obstacle(center, size):
         apply_object(box(
@@ -61,7 +61,7 @@ def main():
         return call_service(node, validity_client, req)
 
     try:
-        # Reference sans poste : les autres objets restent dans la scene.
+        # Reference without the obstacle: other objects remain in the scene.
         obj = CollisionObject()
         obj.id = "et06_obstacle"
         obj.operation = CollisionObject.REMOVE
@@ -88,7 +88,7 @@ def main():
                 )
             samples.append((s, q))
 
-        print("Reference sans poste valide aux points testes.", flush=True)
+        print("The obstacle-free reference is valid at all sampled points.", flush=True)
 
         # Recherche bornee : plusieurs positions et deux largeurs.
         count = 0
@@ -105,7 +105,7 @@ def main():
 
                         if count % 20 == 0:
                             print(
-                                f"{count} candidates testees...",
+                                f"{count} candidates tested...",
                                 flush=True,
                             )
 
@@ -123,25 +123,25 @@ def main():
 
                             if not result.valid and touches_post:
                                 selected = True
-                                print("\nCANDIDATE TROUVEE", flush=True)
-                                print(f"Centre : {center}", flush=True)
+                                print("\nCANDIDATE FOUND", flush=True)
+                                print(f"Center : {center}", flush=True)
                                 print(f"Dimensions : {size}", flush=True)
                                 print(
-                                    f"Reference bloquee a s={s:.2f}",
+                                    f"Reference path blocked a s={s:.2f}",
                                     flush=True,
                                 )
                                 print(
-                                    "Les cinq configurations sont valides.",
+                                    "All five key configurations are valid.",
                                     flush=True,
                                 )
                                 print(
-                                    "Le poste reste a cette position dans RViz.",
+                                    "The obstacle remains at this position in RViz.",
                                     flush=True,
                                 )
                                 return
 
         print(
-            "\nAucune candidate trouvee dans cette grille.",
+            "\nNo candidate was found in this search grid.",
             flush=True,
         )
 
@@ -149,7 +149,7 @@ def main():
         try:
             if not selected:
                 place_obstacle(original_center, original_size)
-                print("Position initiale du poste restauree.", flush=True)
+                print("The original obstacle position was restored.", flush=True)
         finally:
             node.destroy_node()
             rclpy.shutdown()

@@ -29,19 +29,19 @@ T_tf_arrondi = [
 T_home = fk_dh(q_home);
 T_mesure = fk_dh(q_mesure);
 
-disp('=== DH : HOME theorique ===');
+disp('=== DH : theoretical HOME ===');
 disp(T_home);
 
-disp('=== DH : angles mesures ===');
+disp('=== DH : measured joint values ===');
 disp(T_mesure);
 
-disp('=== TF arrondi recopie du terminal ===');
+disp('=== rounded TF copied from the terminal ===');
 disp(T_tf_arrondi);
 
-fprintf('Ecart articulaire maximal a HOME : %.9g rad\n', ...
+fprintf('Maximum joint error a HOME : %.9g rad\n', ...
     max(abs(q_mesure - q_home)));
 
-fprintf(['Difference de position entre DH(q_mesure) et TF arrondi : ' ...
+fprintf(['Position difference entre DH(q_mesure) et TF arrondi : ' ...
          '%.9g m\n'], ...
     norm(T_mesure(1:3,4) - T_tf_arrondi(1:3,4)));
 
@@ -87,7 +87,7 @@ fprintf('Erreur maximale de rotation, norme Frobenius : %.12g\n', ...
 assert(max_ep < 1e-9 && max_eR < 1e-8, ...
     'Echec de la verification DH / URDF.');
 
-disp('Verification interne DH / URDF reussie.');
+disp('Internal verification DH / URDF reussie.');
 
 %% 4. Validation DH contre la mesure TF2 precise
 % Robot immobile, proche de HOME.
@@ -111,11 +111,11 @@ erreur_rotation_fro = norm(delta_R, 'fro');
 
 disp('=== Validation DH contre TF2 precis ===');
 
-disp('Difference de position [m] :');
+disp('Position difference [m] :');
 disp(delta_p);
 
-fprintf('Erreur de position : %.12g m\n', erreur_position);
-fprintf('Ecart de rotation, norme de Frobenius : %.12g\n', ...
+fprintf('Position error : %.12g m\n', erreur_position);
+fprintf('Rotation difference, norme de Frobenius : %.12g\n', ...
     erreur_rotation_fro);
 
 % Seuils proposes pour notre verification numerique,
@@ -124,9 +124,9 @@ assert(erreur_position < 1e-8, ...
     'Ecart de position DH / TF2 trop important.');
 
 assert(erreur_rotation_fro < 1e-8, ...
-    'Ecart de rotation DH / TF2 trop important.');
+    'Rotation difference DH / TF2 trop important.');
 
-disp('Validation numerique DH / TF2 reussie.');
+disp('Numerical validation DH / TF2 reussie.');
 
 %% 5. Partie 3 : verification de la solution IK de PICK
 
@@ -148,7 +148,7 @@ T_pick_cible = [
 
 T_pick_dh = fk_dh(q_pick);
 
-disp('=== PICK : cinematique directe DH ===');
+disp('=== PICK : forward kinematics DH ===');
 disp(T_pick_dh);
 
 erreur_pick_position = norm( ...
@@ -163,7 +163,7 @@ fprintf('PICK : ecart de position DH / cible = %.12g m\n', ...
 fprintf('PICK : ecart de rotation DH / cible, Frobenius = %.12g\n', ...
     erreur_pick_rotation);
 
-%% 6. PICK : comparaison DH contre la cinematique directe MoveIt
+%% 6. PICK : comparaison DH contre la forward kinematics MoveIt
 
 % Position retournee par /compute_fk
 p_pick_moveit = [
@@ -209,10 +209,10 @@ ep_pick = norm( ...
 eR_pick = norm( ...
     T_pick_dh(1:3,1:3) - T_pick_moveit(1:3,1:3), 'fro');
 
-disp('=== PICK : transformation MoveIt ===');
+disp('=== PICK : MoveIt transformation ===');
 disp(T_pick_moveit);
 
-disp('=== PICK : transformation DH ===');
+disp('=== PICK : DH transformation ===');
 disp(T_pick_dh);
 
 fprintf('PICK : erreur de position DH / MoveIt = %.12g m\n', ...
@@ -223,12 +223,12 @@ fprintf('PICK : ecart de rotation DH / MoveIt, Frobenius = %.12g\n', ...
 
 % Seuils de verification numerique proposes pour ce modele
 assert(ep_pick < 1e-8, ...
-    'Verifier la position : ecart DH / MoveIt trop important.');
+    'Check la position : ecart DH / MoveIt trop important.');
 
 assert(eR_pick < 1e-8, ...
-    'Verifier la rotation : ecart DH / MoveIt trop important.');
+    'Check la rotation : ecart DH / MoveIt trop important.');
 
-disp('Validation numerique de PICK reussie.');
+disp('Numerical validation de PICK reussie.');
 
 %% 7. PLACE : verification de la solution IK
 
@@ -250,7 +250,7 @@ T_place_cible = [
 
 T_place_dh = fk_dh(q_place);
 
-disp('=== PLACE : cinematique directe DH ===');
+disp('=== PLACE : forward kinematics DH ===');
 disp(T_place_dh);
 
 ep_place_cible = norm( ...
@@ -265,7 +265,7 @@ fprintf('PLACE : ecart de position DH / cible = %.12g m\n', ...
 fprintf('PLACE : ecart de rotation DH / cible, Frobenius = %.12g\n', ...
     eR_place_cible);
 
-%% 8. PLACE : comparaison DH contre la cinematique directe MoveIt
+%% 8. PLACE : comparaison DH contre la forward kinematics MoveIt
 
 % Position retournee par /compute_fk
 p_place_moveit = [
@@ -307,10 +307,10 @@ ep_place = norm( ...
 eR_place = norm( ...
     T_place_dh(1:3,1:3) - T_place_moveit(1:3,1:3), 'fro');
 
-disp('=== PLACE : transformation MoveIt ===');
+disp('=== PLACE : MoveIt transformation ===');
 disp(T_place_moveit);
 
-disp('=== PLACE : transformation DH ===');
+disp('=== PLACE : DH transformation ===');
 disp(T_place_dh);
 
 fprintf('PLACE : erreur de position DH / MoveIt = %.12g m\n', ...
@@ -322,18 +322,18 @@ fprintf('PLACE : ecart de rotation DH / MoveIt, Frobenius = %.12g\n', ...
 % Seuils de coherence numerique entre les deux modeles,
 % distincts d'une tolerance de precision de l'IK.
 assert(ep_place < 1e-8, ...
-    'Verifier la position : ecart DH / MoveIt trop important.');
+    'Check la position : ecart DH / MoveIt trop important.');
 
 assert(eR_place < 1e-8, ...
-    'Verifier la rotation : ecart DH / MoveIt trop important.');
+    'Check la rotation : ecart DH / MoveIt trop important.');
 
-disp('Validation numerique de PLACE reussie.');
+disp('Numerical validation de PLACE reussie.');
 
 %% Verification du chemin cartesien retourne par MoveIt
 
 D = jsondecode(fileread("pre_pick_to_pick.json"));
 
-% Verifier l'ordre des articulations avant d'utiliser le modele DH.
+% Check l'ordre des articulations avant d'utiliser le modele DH.
 expected_names = "joint_" + string((1:6)');
 actual_names = string(D.joint_names);
 assert(isequal(actual_names(:), expected_names), ...
@@ -365,16 +365,16 @@ transverse_error = sqrt( ...
 p_start = [0.75,-0.30,0.95];
 p_end = [0.75,-0.30,0.85];
 
-fprintf('\n=== Chemin cartesien MoveIt ===\n');
-fprintf('Nombre de points : %d\n', N);
+fprintf('\n=== MoveIt Cartesian path ===\n');
+fprintf('Number of points : %d\n', N);
 fprintf('Duree provisoire MoveIt : %.6f s\n', time(end)-time(1));
-fprintf('Erreur position initiale : %.9g m\n', ...
+fprintf('Initial position error : %.9g m\n', ...
     norm(P(1,:)-p_start));
-fprintf('Erreur position finale : %.9g m\n', ...
+fprintf('Final position error : %.9g m\n', ...
     norm(P(end,:)-p_end));
-fprintf('Ecart transversal maximal : %.9g m\n', ...
+fprintf('Maximum transverse error : %.9g m\n', ...
     max(transverse_error));
-fprintf('Ecart orientation maximal, Frobenius : %.9g\n', ...
+fprintf('Maximum orientation difference, Frobenius : %.9g\n', ...
     max(orientation_error));
 
 % Une descente monotone correspond a des differences z <= 0.
@@ -476,17 +476,17 @@ for profile = 1:2
     % d'acceleration numerique : les bords sont moins precis.
     interior = 3:n-2;
 
-    fprintf('\n=== %s : verification cartesienne ===\n', labels{profile});
+    fprintf('\n=== %s : Cartesian verification ===\n', labels{profile});
     fprintf('Duree : %.6f s\n', t(end)-t(1));
-    fprintf('Ecart transversal maximal : %.9g m\n', ...
+    fprintf('Maximum transverse error : %.9g m\n', ...
         max(transverse_error));
     fprintf('Erreur finale de position : %.9g m\n', ...
         norm(P(end,:)-[0.75,-0.30,0.85]));
-    fprintf('Ecart orientation maximal, Frobenius : %.9g\n', ...
+    fprintf('Maximum orientation difference, Frobenius : %.9g\n', ...
         max(rotation_error));
-    fprintf('Vitesse cartesienne maximale estimee : %.9g m/s\n', ...
+    fprintf('Estimated maximum Cartesian velocity : %.9g m/s\n', ...
         max(speed));
-    fprintf('Acceleration maximale estimee hors bords : %.9g m/s2\n', ...
+    fprintf('Estimated maximum acceleration excluding boundaries : %.9g m/s2\n', ...
         max(acceleration(interior)));
 
     nexttile(1);

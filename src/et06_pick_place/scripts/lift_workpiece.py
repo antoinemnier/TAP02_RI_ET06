@@ -37,7 +37,7 @@ def main():
             node, ExecuteTrajectory, "/execute_trajectory"
         )
 
-        # Relever les articulations ET les objets attaches.
+        # Read both joint positions and attached objects.
         scene = read_scene(node, reader)
 
         attached = any(
@@ -46,7 +46,7 @@ def main():
         )
 
         if not attached:
-            raise RuntimeError("La piece n'est pas attachee a tool0.")
+            raise RuntimeError("The workpiece is not attached to tool0.")
 
         # Ce programme est prevu pour commencer a PICK.
         check_position(node, names, data["pick"]["joints"], 0.001)
@@ -63,7 +63,7 @@ def main():
         request.group_name = data["planning_group"]
         request.link_name = data["tool_link"]
 
-        # Etat complet, incluant explicitement la piece attachee.
+        # Complete state explicitly including the attached workpiece.
         request.start_state = state
         request.start_state.is_diff = False
 
@@ -89,39 +89,39 @@ def main():
         trajectory = response.solution
         points = trajectory.joint_trajectory.points
 
-        print(f"Code resultat : {response.error_code.val}")
-        print(f"Fraction calculee : {response.fraction:.8f}")
-        print(f"Nombre de points : {len(points)}")
+        print(f"Result code : {response.error_code.val}")
+        print(f"Computed fraction : {response.fraction:.8f}")
+        print(f"Number of points : {len(points)}")
 
         if (
             response.error_code.val != 1
             or response.fraction < 1.0 - 1e-9
             or len(points) < 2
         ):
-            raise RuntimeError("Decollage incomplet : aucune execution.")
+            raise RuntimeError("Incomplete lift: no execution was requested.")
 
         duration = (
             points[-1].time_from_start.sec
             + points[-1].time_from_start.nanosec * 1e-9
         )
-        print(f"Duree MoveIt : {duration:.6f} s")
-        print("SIMULATION UNIQUEMENT : montee avec la piece attachee.")
+        print(f"MoveIt duration : {duration:.6f} s")
+        print("SIMULATION ONLY: upward motion with the attached workpiece.")
 
         if os.environ.get("ET06_AUTO_CONFIRM") != "1":
             answer = input(
-                "Taper OUI pour executer le decollage : "
+                "Type YES to execute the lift : "
             )
-            if answer.strip().upper() != "OUI":
-                raise RuntimeError("Execution annulee par l'utilisateur.")
+            if answer.strip().upper() != "YES":
+                raise RuntimeError("Execution cancelled by the user.")
         else:
-            print("Execution autorisee par le programme principal.")
+            print("Execution authorized by the main program.")
 
-        # Ne pas executer si le robot a bouge depuis le calcul.
+        # Do not execute if the robot moved after planning.
         check_position(node, names, start, 0.001)
 
         execute(node, executor, trajectory)
 
-        # Verifier la configuration finale dans le bon ordre.
+        # Check la configuration finale dans le bon ordre.
         final_positions = dict(zip(
             trajectory.joint_trajectory.joint_names,
             points[-1].positions,
@@ -129,8 +129,8 @@ def main():
         endpoint = [final_positions[name] for name in names]
         check_position(node, names, endpoint, 0.001)
 
-        print("Decollage termine.")
-        print("La piece reste attachee. Aucun transfert vers PLACE effectue.")
+        print("Lift completed.")
+        print("The workpiece remains attached. No transfer to PLACE was performed.")
 
     finally:
         node.destroy_node()
@@ -142,8 +142,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+        print("\nProgram interrupted.")
         raise SystemExit(130)
     except Exception as error:
-        print(f"\nARRET : {error}")
+        print(f"\nSTOP : {error}")
         raise SystemExit(1)

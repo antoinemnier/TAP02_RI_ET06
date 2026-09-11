@@ -41,7 +41,7 @@ def main():
         rows = list(csv.DictReader(file))
 
     if len(rows) < 2:
-        raise RuntimeError("Profil de depot vide ou incomplet.")
+        raise RuntimeError("The placement profile is empty or incomplete.")
 
     trajectory = RobotTrajectory()
     trajectory.joint_trajectory.joint_names = names
@@ -134,7 +134,7 @@ def main():
 
         if not attached:
             raise RuntimeError(
-                "La piece n'est pas attachee a tool0."
+                "The workpiece is not attached to tool0."
             )
 
         check_position(
@@ -145,22 +145,22 @@ def main():
         )
 
         print(
-            f"Profil quintique bleu : {len(rows)} points, "
-            f"duree {duration:.6f} s."
+            f"Blue quintic profile : {len(rows)} points, "
+            f"duration {duration:.6f} s."
         )
         print(
-            "SIMULATION UNIQUEMENT. "
-            "La piece doit rester attachee pendant la descente."
+            "SIMULATION ONLY. "
+            "The workpiece must remain attached during the descent."
         )
 
         if os.environ.get("ET06_AUTO_CONFIRM") != "1":
             answer = input(
-                "Taper OUI pour executer le depot : "
+                "Type YES to execute the placement approach : "
             )
-            if answer.strip().upper() != "OUI":
-                raise RuntimeError("Execution annulee par l'utilisateur.")
+            if answer.strip().upper() != "YES":
+                raise RuntimeError("Execution cancelled by the user.")
         else:
-            print("Execution autorisee par le programme principal.")
+            print("Execution authorized by the main program.")
 
         check_position(
             node,
@@ -192,12 +192,12 @@ def main():
 
         if not still_attached:
             raise RuntimeError(
-                "La piece n'est plus attachee apres la descente."
+                "The workpiece is no longer attached after the descent."
             )
 
-        print("Approche de depot terminee.")
-        print("La piece reste attachee.")
-        print("Detachement pas encore effectue.")
+        print("Placement approach completed.")
+        print("The workpiece remains attached.")
+        print("Detachment has not been performed yet.")
 
     finally:
         node.destroy_node()
@@ -210,8 +210,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+        print("\nProgram interrupted.")
         raise SystemExit(130)
     except Exception as error:
-        print(f"\nARRET : {error}")
+        print(f"\nSTOP : {error}")
         raise SystemExit(1)

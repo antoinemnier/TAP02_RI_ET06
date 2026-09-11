@@ -22,7 +22,7 @@ def main():
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     output_dir = folder / "results" / run_id
     output_dir.mkdir(parents=True, exist_ok=False)
-    print(f"Resultats : {output_dir}", flush=True)
+    print(f"Results : {output_dir}", flush=True)
 
     trials = []
     for trial in range(1, 11):
@@ -55,8 +55,8 @@ def main():
             req.max_velocity_scaling_factor = 0.1
             req.max_acceleration_scaling_factor = 0.1
 
-            # Depart explicite : HOME theorique.
-            # Aucun mouvement n'est commande.
+            # Explicit start state : theoretical HOME.
+            # No motion is commanded.
             req.start_state.is_diff = True
             req.start_state.joint_state.name = data["joint_names"]
             req.start_state.joint_state.position = [
@@ -81,7 +81,7 @@ def main():
             req.goal_constraints = [goal]
 
             print(
-                f"\n=== Essai {trial}/10 : {planner} ===",
+                f"\n=== Trial {trial}/10 : {planner} ===",
                 flush=True,
             )
 
@@ -131,28 +131,28 @@ def main():
                 json.dumps(record, indent=2, allow_nan=False)
             )
 
-            print(f"Code resultat : {result.error_code.val}")
+            print(f"Result code : {result.error_code.val}")
             print(f"Message : {result.error_code.message}")
             print(f"Source : {result.error_code.source}")
             print(
-                f"Temps rapporte par MoveIt : "
+                f"Time reported by MoveIt : "
                 f"{result.planning_time:.6f} s"
             )
-            print(f"Temps total de l'appel : {elapsed:.6f} s")
-            print(f"Nombre de points retournes : {len(points)}")
+            print(f"Total service-call time : {elapsed:.6f} s")
+            print(f"Number of returned points : {len(points)}")
             print(f"Fichier : {output_file.name}")
 
             if result.error_code.val == 1 and points:
                 successes[planner] += 1
-                print("Trajectoire retournee avec succes.", flush=True)
+                print("Trajectory returned successfully.", flush=True)
             else:
-                print("Pas de trajectoire exploitable.", flush=True)
+                print("No usable trajectory was returned.", flush=True)
 
-        print("\n=== BILAN ===")
+        print("\n=== SUMMARY ===")
         for planner, count in successes.items():
             print(f"{planner} : {count}/10 succes")
 
-        print(f"Resultats sauvegardes dans : {output_dir}")
+        print(f"Results sauvegardes dans : {output_dir}")
         print("Aucune execution de mouvement demandee.")
 
     finally:

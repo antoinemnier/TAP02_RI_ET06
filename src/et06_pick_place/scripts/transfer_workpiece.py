@@ -48,7 +48,7 @@ def main():
         )
 
         if not attached:
-            raise RuntimeError("La piece n'est pas attachee a tool0.")
+            raise RuntimeError("The workpiece is not attached to tool0.")
 
         positions = dict(zip(
             scene.robot_state.joint_state.name,
@@ -85,37 +85,37 @@ def main():
 
         req.goal_constraints = [goal]
 
-        print("Planification vers PRE_PLACE avec la piece...", flush=True)
+        print("Planning to PRE_PLACE with the attached workpiece...", flush=True)
         response = call_service(node, planner, request)
         result = response.motion_plan_response
         points = result.trajectory.joint_trajectory.points
 
-        print(f"Code planification : {result.error_code.val}")
-        print(f"Temps rapporte : {result.planning_time:.6f} s")
-        print(f"Nombre de points : {len(points)}")
+        print(f"Planning result code : {result.error_code.val}")
+        print(f"Reported planning time : {result.planning_time:.6f} s")
+        print(f"Number of points : {len(points)}")
 
         if result.error_code.val != 1 or len(points) < 2:
             print(f"Message : {result.error_code.message}")
             print(f"Source : {result.error_code.source}")
-            raise RuntimeError("Planification echouee. Aucune execution.")
+            raise RuntimeError("Planning failed. No execution was requested.")
 
         duration = (
             points[-1].time_from_start.sec
             + points[-1].time_from_start.nanosec * 1e-9
         )
-        print(f"Duree du transfert : {duration:.6f} s")
-        print("SIMULATION UNIQUEMENT. Ne pas modifier la scene.")
+        print(f"Transfer duration : {duration:.6f} s")
+        print("SIMULATION ONLY. Do not modify the planning scene.")
 
         if os.environ.get("ET06_AUTO_CONFIRM") != "1":
             answer = input(
-                "Taper OUI pour executer le transfert : "
+                "Type YES to execute the transfer : "
             )
-            if answer.strip().upper() != "OUI":
-                raise RuntimeError("Execution annulee par l'utilisateur.")
+            if answer.strip().upper() != "YES":
+                raise RuntimeError("Execution cancelled by the user.")
         else:
-            print("Execution autorisee par le programme principal.")
+            print("Execution authorized by the main program.")
 
-        # Verifier que le robot n'a pas bouge pendant la confirmation.
+        # Check que le robot n'a pas bouge pendant la confirmation.
         check_position(node, names, start, 0.001)
 
         execute(node, executor, result.trajectory)
@@ -129,10 +129,10 @@ def main():
         )
 
         if not still_attached:
-            raise RuntimeError("Piece non retrouvee parmi les objets attaches.")
+            raise RuntimeError("The workpiece was not found among the attached objects.")
 
-        print("Transfert termine : robot a PRE_PLACE.")
-        print("Piece toujours attachee. Depot non effectue.")
+        print("Transfer completed: robot at PRE_PLACE.")
+        print("The workpiece remains attached. Placement not performed.")
 
     finally:
         node.destroy_node()
@@ -144,8 +144,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+        print("\nProgram interrupted.")
         raise SystemExit(130)
     except Exception as error:
-        print(f"\nARRET : {error}")
+        print(f"\nSTOP : {error}")
         raise SystemExit(1)

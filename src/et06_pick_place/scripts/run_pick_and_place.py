@@ -9,7 +9,7 @@ SCRIPTS_FOLDER = Path(__file__).resolve().parent
 
 STEPS = [
     (
-        "Creation et verification de la scene",
+        "Create and verify the planning scene",
         "setup_scene.py",
         False,
     ),
@@ -19,27 +19,27 @@ STEPS = [
         True,
     ),
     (
-        "Attachement de la piece",
+        "Attach the workpiece",
         "attach_workpiece.py",
         False,
     ),
     (
-        "Decollage de la piece",
+        "Lift the workpiece",
         "lift_workpiece.py",
         True,
     ),
     (
-        "Transport vers PRE_PLACE",
+        "Transfer to PRE_PLACE",
         "transfer_workpiece.py",
         True,
     ),
     (
-        "Approche de depot",
+        "Placement approach",
         "execute_place_approach.py",
         True,
     ),
     (
-        "Detachement de la piece",
+        "Detach the workpiece",
         "detach_workpiece.py",
         False,
     ),
@@ -50,11 +50,11 @@ def run_step(number, title, filename, needs_confirmation):
     script = SCRIPTS_FOLDER / filename
 
     if not script.is_file():
-        raise RuntimeError(f"Script introuvable : {script}")
+        raise RuntimeError(f"Script not found : {script}")
 
     print()
     print("=" * 70)
-    print(f"ETAPE {number}/{len(STEPS)} : {title}")
+    print(f"STEP {number}/{len(STEPS)} : {title}")
     print(f"Script : {filename}")
     print("=" * 70)
 
@@ -72,27 +72,27 @@ def run_step(number, title, filename, needs_confirmation):
             f"Echec de l'etape {number} : {title}"
         )
 
-    print(f"Etape {number} terminee.")
+    print(f"Step {number} terminee.")
 
 
 def main():
-    print("CYCLE PICK-AND-PLACE ET06")
+    print("ET06 PICK-AND-PLACE CYCLE")
     print("Robot : FANUC M-10iA")
-    print("SIMULATION UNIQUEMENT")
+    print("SIMULATION ONLY")
     print()
-    print("Conditions requises :")
-    print("- demo.launch.py actif ;")
-    print("- robot initialement en HOME ;")
-    print("- aucun autre mouvement en cours ;")
-    print("- aucun autre script de scene en cours.")
+    print("Requirements :")
+    print("- demo.launch.py running ;")
+    print("- robot initially at HOME ;")
+    print("- no other motion currently running ;")
+    print("- no other planning-scene script currently running.")
     print()
 
     answer = input(
-        "Taper DEMARRER pour lancer la sequence : "
+        "Type START to run the sequence : "
     )
 
-    if answer.strip() != "DEMARRER":
-        print("Sequence annulee.")
+    if answer.strip().upper() != "START":
+        print("Sequence cancelled.")
         return
 
     for number, step in enumerate(STEPS, start=1):
@@ -100,8 +100,8 @@ def main():
 
     print()
     print("=" * 70)
-    print("CYCLE TERMINE")
-    print("La piece a ete deposee et detachee.")
+    print("CYCLE COMPLETED")
+    print("The workpiece was placed and detached.")
     print("=" * 70)
 
 
@@ -109,8 +109,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nSequence interrompue par l'utilisateur.")
+        print("\nSequence interrupted by the user.")
         sys.exit(1)
     except Exception as error:
-        print(f"\nARRET DU CYCLE : {error}")
+        print(f"\nCYCLE STOPPED : {error}")
         sys.exit(1)

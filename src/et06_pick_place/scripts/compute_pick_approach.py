@@ -30,7 +30,7 @@ def main():
         request.group_name = data["planning_group"]
         request.link_name = data["tool_link"]
 
-        # Depart impose : configuration pre_pick deja calculee.
+        # Specified start state : configuration pre_pick deja calculee.
         request.start_state.is_diff = True
         request.start_state.joint_state.name = data["joint_names"]
         request.start_state.joint_state.position = [
@@ -41,7 +41,7 @@ def main():
         request.max_step = 0.001
         request.avoid_collisions = True
 
-        # Timing provisoire : ce ne sont PAS les profils des CSV.
+        # Temporary timing : ce ne sont PAS les profils des CSV.
         request.max_velocity_scaling_factor = 0.1
         request.max_acceleration_scaling_factor = 0.1
 
@@ -68,9 +68,9 @@ def main():
         response = call_service(node, client, request)
         trajectory = response.solution.joint_trajectory
 
-        print(f"Code resultat : {response.error_code.val}")
-        print(f"Fraction calculee : {response.fraction:.8f}")
-        print(f"Nombre de points : {len(trajectory.points)}")
+        print(f"Result code : {response.error_code.val}")
+        print(f"Computed fraction : {response.fraction:.8f}")
+        print(f"Number of points : {len(trajectory.points)}")
 
         complete = (
             response.error_code.val == 1
@@ -79,8 +79,8 @@ def main():
         )
 
         if not complete:
-            print("Approche incomplete ou en echec.")
-            print("Aucune execution demandee.")
+            print("The approach is incomplete or failed.")
+            print("No execution was requested.")
             return
 
         # Controle simple des ecarts entre points articulaires.
@@ -124,9 +124,9 @@ def main():
         )
 
         print(f"Trajectoire enregistree : {filename}")
-        print("Chemin complet retourne, avec collisions activees.")
-        print("Profil cubique/quintique pas encore applique.")
-        print("Aucune execution demandee.")
+        print("Complete path returned with collision checking enabled.")
+        print("Cubic/quintic profile not yet applied.")
+        print("No execution was requested.")
 
     finally:
         node.destroy_node()

@@ -3,12 +3,12 @@ import math
 import csv
 from pathlib import Path
 import sys
-# Deplacement vertical : pre_pick -> pick
+# Motion vertical : pre_pick -> pick
 L = 0.10
 z_initial = 0.95
 
-# Utilisation : python3 approach_profiles.py red
-# ou          : python3 approach_profiles.py blue
+# Utilisation : python3 generate_approach_profiles.py red
+# ou          : python3 generate_approach_profiles.py blue
 case = sys.argv[1] if len(sys.argv) > 1 else "red"
 
 if case == "red":
@@ -21,7 +21,7 @@ else:
     raise SystemExit("Choisir red ou blue.")
 
 print(f"Limites utilisees : {case}")
-# Durees minimales calculees analytiquement
+# Durations minimales calculees analytiquement
 T_cubic = max(
     1.5 * L / v_max,
     math.sqrt(6.0 * L / a_max),
@@ -32,12 +32,12 @@ T_quintic = max(
     math.sqrt((10.0 / math.sqrt(3.0)) * L / a_max),
 )
 
-# Meme duree pour comparer les profils + marge de 5 %
+# Same duration pour comparer les profils + marge de 5 %
 T = 1.05 * max(T_cubic, T_quintic)
 
-print(f"Duree minimale cubique : {T_cubic:.6f} s")
-print(f"Duree minimale quintique : {T_quintic:.6f} s")
-print(f"Duree commune retenue : {T:.6f} s")
+print(f"Minimum cubic duration : {T_cubic:.6f} s")
+print(f"Minimum quintic duration : {T_quintic:.6f} s")
+print(f"Selected common duration : {T:.6f} s")
 
 folder = Path(__file__).resolve().parents[1]
 output = folder / "results" / "approach_profiles"
@@ -77,11 +77,11 @@ for profile in ["cubic", "quintic"]:
     peak_a = max(abs(row[3]) for row in rows)
 
     print(f"\nProfil : {profile}")
-    print(f"Vitesse maximale echantillonnee : {peak_v:.6f} m/s")
-    print(f"Acceleration maximale echantillonnee : {peak_a:.6f} m/s2")
+    print(f"Maximum sampled velocity : {peak_v:.6f} m/s")
+    print(f"Maximum sampled acceleration : {peak_a:.6f} m/s2")
 
     # Deux extremites + trois points intermediaires
-    print("Cinq points : temps, position z, vitesse z, acceleration z")
+    print("Five points: time, z position, z velocity, z acceleration")
     for k in [0, 50, 100, 150, 200]:
         print("  " + ", ".join(f"{value:.6f}" for value in rows[k]))
 

@@ -13,17 +13,17 @@ from moveit_msgs.srv import ApplyPlanningScene, GetStateValidity
 
 def call_service(node, client, request):
     if not client.wait_for_service(timeout_sec=10.0):
-        raise RuntimeError(f"Service indisponible : {client.srv_name}")
+        raise RuntimeError(f"Service unavailable: {client.srv_name}")
 
     future = client.call_async(request)
     rclpy.spin_until_future_complete(node, future, timeout_sec=15.0)
 
     if not future.done():
-        raise RuntimeError(f"Delai depasse : {client.srv_name}")
+        raise RuntimeError(f"Service timeout: {client.srv_name}")
 
     result = future.result()
     if result is None:
-        raise RuntimeError(f"Aucune reponse : {client.srv_name}")
+        raise RuntimeError(f"No response from service: {client.srv_name}")
 
     return result
 
@@ -96,9 +96,9 @@ def main():
         response = call_service(node, apply_client, request)
 
         if not response.success:
-            raise RuntimeError("Echec de l'application de la scene.")
+            raise RuntimeError("Failed to apply the planning scene.")
 
-        print("\nScene appliquee : quatre objets ET06.", flush=True)
+        print("\nPlanning scene applied : four ET06 objects.", flush=True)
 
         all_valid = True
 
@@ -113,7 +113,7 @@ def main():
 
             response = call_service(node, validity_client, request)
 
-            status = "VALIDE" if response.valid else "INVALIDE"
+            status = "VALID" if response.valid else "INVALID"
             print(f"{name.upper():12s} : {status}", flush=True)
 
             if not response.valid:
@@ -126,13 +126,13 @@ def main():
                     )
 
         if all_valid:
-            print("\nLes cinq etats sont valides dans cette scene.")
-            print("Les trajets entre ces etats restent a verifier.")
+            print("\nAll five states are valid in this planning scene.")
+            print("Paths between these states still need verification.")
         else:
-            print("\nScene a ajuster avant de planifier le cycle.")
+            print("\nThe scene must be adjusted before planning the cycle.")
 
-        print("Aucun mouvement n'a ete commande.")
-        print("La piece reste un objet du monde, non attache.")
+        print("No motion was commanded.")
+        print("The workpiece remains an unattached world object.")
 
     finally:
         node.destroy_node()

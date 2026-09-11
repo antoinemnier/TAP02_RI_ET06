@@ -36,7 +36,7 @@ def main():
         rows = list(csv.DictReader(file))
 
     if not rows:
-        raise RuntimeError("Profil de depot vide.")
+        raise RuntimeError("The placement profile is empty.")
 
     target = [
         float(rows[-1][f"q{joint}"])
@@ -74,21 +74,21 @@ def main():
 
         if len(matches) != 1:
             raise RuntimeError(
-                "La piece attachee est absente ou dupliquee."
+                "The attached workpiece is missing or duplicated."
             )
 
         attached = matches[0]
 
         if attached.link_name != "tool0":
             raise RuntimeError(
-                "La piece est attachee a un lien inattendu."
+                "The workpiece is attached to an unexpected link."
             )
 
         request = ApplyPlanningScene.Request()
         request.scene.is_diff = True
         request.scene.robot_state.is_diff = True
 
-        # Retirer la piece des objets attaches.
+        # Remove the workpiece from the attached objects.
         remove_attached = AttachedCollisionObject()
         remove_attached.link_name = attached.link_name
         remove_attached.object.id = attached.object.id
@@ -98,8 +98,8 @@ def main():
             remove_attached
         ]
 
-        # Remettre dans le monde l'objet fourni par MoveIt.
-        # Sa pose doit deja etre exprimee dans le repere global.
+        # Restore the object supplied by MoveIt to the world.
+        # Its pose must already be expressed in the global frame.
         world_object = attached.object
         world_object.operation = CollisionObject.ADD
         request.scene.world.collision_objects = [world_object]
@@ -112,7 +112,7 @@ def main():
 
         if not response.success:
             raise RuntimeError(
-                "La scene a refuse le detachement."
+                "The planning scene rejected the detachment."
             )
 
         final_scene = read_scene(node, reader)
@@ -130,29 +130,29 @@ def main():
 
         if still_attached:
             raise RuntimeError(
-                "La piece est encore attachee."
+                "The workpiece is still attached."
             )
 
         if len(world_matches) != 1:
             raise RuntimeError(
-                "La piece n'a pas ete remise correctement dans le monde."
+                "The workpiece was not correctly restored to the world."
             )
 
         obj = world_matches[0]
 
-        print("Detachement confirme.")
-        print("La piece est maintenant un objet du monde.")
+        print("Detachment confirmed.")
+        print("The workpiece is now a world object.")
         print(
-            "Repere de la piece : "
+            "Workpiece frame: "
             f"{obj.header.frame_id}"
         )
         print(
-            "Position de la piece : "
+            "Workpiece position: "
             f"[{obj.pose.position.x:.6f}, "
             f"{obj.pose.position.y:.6f}, "
             f"{obj.pose.position.z:.6f}]"
         )
-        print("Aucun mouvement commande.")
+        print("No motion was commanded.")
 
     finally:
         node.destroy_node()
@@ -165,8 +165,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+        print("\nProgram interrupted.")
         raise SystemExit(130)
     except Exception as error:
-        print(f"\nARRET : {error}")
+        print(f"\nSTOP : {error}")
         raise SystemExit(1)

@@ -53,7 +53,7 @@ def main():
                 if not response.valid:
                     all_valid = False
                     print(
-                        f"INVALIDE : point {index}, "
+                        f"INVALID : point {index}, "
                         f"temps = {float(row['time_s']):.6f} s",
                         flush=True,
                     )
@@ -68,17 +68,17 @@ def main():
 
                 if (index + 1) % 500 == 0:
                     print(
-                        f"  {index + 1}/{len(rows)} points verifies",
+                        f"  {index + 1}/{len(rows)} points checked",
                         flush=True,
                     )
 
             if all_valid:
                 print(
-                    f"VALIDE : {len(rows)}/{len(rows)} points.",
+                    f"VALID : {len(rows)}/{len(rows)} points.",
                     flush=True,
                 )
 
-        print("\nAucun mouvement commande.")
+        print("\nNo motion was commanded.")
 
     finally:
         node.destroy_node()

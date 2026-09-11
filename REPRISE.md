@@ -16,7 +16,7 @@
   src/et06_pick_place/config/key_poses.yaml
 
 ## Scene
-- Script : src/et06_pick_place/scripts/check_scene.py
+- Script : src/et06_pick_place/scripts/setup_scene.py
 - Quatre objets : support, piece, surface de depot, obstacle.
 - Obstacle :
   centre = [0.45, -0.06, 0.975]
@@ -31,7 +31,7 @@
 - RRTConnect et RRTstar configures pour manipulator.
 - longest_valid_segment_fraction = 0.001.
 - ValidateSolution conserve.
-- Script : src/et06_pick_place/scripts/test_plan.py
+- Script : src/et06_pick_place/scripts/benchmark_planners.py
 
 ## Benchmark HOME -> pre_pick
 Dossier :
@@ -50,7 +50,7 @@ Resume :
 - Unique succes RRTstar : longueur 1.88414 rad.
 
 ## Prochaine action
-Verifier si l'ajout du calcul d'acceleration RMS a ete fait
+Check si l'ajout du calcul d'acceleration RMS a ete fait
 dans scripts/summarize_benchmark.py ; sinon l'ajouter.
 Lancer le resume sur les resultats existants.
 Ne pas refaire le benchmark inutilement.
@@ -80,7 +80,7 @@ Puis :
 
 ### Approche pre_pick -> pick
 - Descente de 10 cm, orientation constante.
-- Chemin cartesien MoveIt complet : fraction 1.0, 26 points.
+- MoveIt Cartesian path complet : fraction 1.0, 26 points.
 - Chemin exporte depuis MATLAB en fonction de l'avancement s.
 - Profils cubique et quintique reparametres en Python.
 - Duree commune rouge ajustee : 3.160710 s.
@@ -101,11 +101,11 @@ Puis :
 
 ### Fichiers importants
 - config/key_poses.yaml
-- scripts/check_scene.py
-- scripts/cartesian_approach.py
-- scripts/approach_profiles.py
+- scripts/setup_scene.py
+- scripts/compute_pick_approach.py
+- scripts/generate_approach_profiles.py
 - scripts/retime_approach.py
-- scripts/check_retimed.py
+- scripts/validate_retimed_trajectory.py
 - results/cartesian/pre_pick_to_pick.json
 - results/cartesian/pre_pick_to_pick_path.csv
 - results/retimed/cubic_red_joints.csv
@@ -129,14 +129,14 @@ Ecrire un seul programme pour :
 2. Planifier avec RRTConnect vers le debut exact du CSV quintique.
 3. Demander confirmation avant execution.
 4. Executer le transfert et verifier son succes.
-5. Verifier l'arrivee au depart de l'approche.
+5. Check l'arrivee au depart de l'approche.
 6. Executer le CSV quintique avec son timing de 3.160710 s.
 7. Attendre et verifier le resultat.
 Ne pas appliquer un nouveau timing qui remplacerait notre profil.
 
 ### Encore a faire
 - Execution et observation de 4A + 4B.
-- Attachement de la piece et transfert 4C.
+- Attach the workpiece et transfert 4C.
 - Approche 4D avec les limites appropriees.
 - Profils bleus articulaires et verification avec piece attachee.
 - Detachement et cycle complet.

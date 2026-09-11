@@ -19,7 +19,7 @@ def joint_length(points):
 
 def report_metric(label, values):
     if not values:
-        print(f"  {label} : aucune donnee")
+        print(f"  {label} : no data")
         return
 
     print(
@@ -63,14 +63,14 @@ def acceleration_rms(points):
 def main():
     if len(sys.argv) != 2:
         raise SystemExit(
-            "Usage : python3 summarize_benchmark.py DOSSIER_RESULTATS"
+            "Usage: python3 summarize_benchmark.py RESULTS_DIRECTORY"
         )
 
     folder = Path(sys.argv[1])
     files = sorted(folder.glob("*.json"))
 
     if not files:
-        raise SystemExit(f"Aucun fichier JSON dans : {folder}")
+        raise SystemExit(f"No JSON file found in : {folder}")
 
     records = [json.loads(path.read_text()) for path in files]
 
@@ -82,25 +82,25 @@ def main():
         ]
 
         print(f"\n=== {planner} ===")
-        print(f"Succes : {len(successful)}/{len(runs)}")
+        print(f"Success : {len(successful)}/{len(runs)}")
         print(
-            "Codes retour :",
+            "Return codes :",
             dict(Counter(r["error_code"] for r in runs)),
         )
 
-        print("\nTous les essais :")
+        print("\nAll trials :")
         report_metric(
-            "Temps total appel [s]",
+            "Total call time [s]",
             [r["service_wall_time_s"] for r in runs],
         )
 
-        print("\nEssais reussis uniquement :")
+        print("\nSuccesssful trials only :")
         report_metric(
-            "Temps rapporte MoveIt [s]",
+            "Reported planning time MoveIt [s]",
             [r["planning_time_s"] for r in successful],
         )
         report_metric(
-            "Longueur articulaire [rad]",
+            "Joint-space path length [rad]",
             [joint_length(r["points"]) for r in successful],
         )
         durations = []
@@ -109,7 +109,7 @@ def main():
             last_time = r["points"][-1]["time_s"]
             durations.append(last_time - first_time)
 
-        report_metric("Duree trajectoire [s]", durations)
+        report_metric("Trajectory duration [s]", durations)
         rms_values = []
 
         for r in successful:
@@ -118,26 +118,26 @@ def main():
                 rms_values.append(value)
 
         report_metric(
-            "Norme acceleration articulaire RMS [rad/s^2]",
+            "Joint acceleration RMS norm [rad/s^2]",
             rms_values,
         )
 
         print(
-            f"  Trajectoires avec accelerations exploitables : "
+            f"  Trajectories with usable acceleration data : "
             f"{len(rms_values)}/{len(successful)}"
         )
-        print("\nDetail des echecs :")
+        print("\nFailure details :")
         failures = [
             r for r in runs
             if r["error_code"] != 1 or not r["points"]
         ]
 
         if not failures:
-            print("  Aucun.")
+            print("  None.")
 
         for r in failures:
             print(
-                f"  Essai {r['trial']:02d} : "
+                f"  Trial {r['trial']:02d} : "
                 f"code={r['error_code']}, "
                 f"points={len(r['points'])}, "
                 f"temps={r['planning_time_s']:.6f} s"

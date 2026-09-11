@@ -45,21 +45,21 @@ def main():
         )
 
         if not attached:
-            raise RuntimeError("La piece n'est pas attachee.")
+            raise RuntimeError("The workpiece is not attached.")
 
         request = GetCartesianPath.Request()
         request.header.frame_id = data["frame_id"]
         request.group_name = data["planning_group"]
         request.link_name = data["tool_link"]
 
-        # Etat complet : articulations et piece attachee.
+        # Complete state: joint positions and attached workpiece.
         request.start_state = scene.robot_state
         request.start_state.is_diff = False
 
         request.max_step = 0.001
         request.avoid_collisions = True
 
-        # Timing provisoire, remplace ensuite par notre profil bleu.
+        # Temporary timing, remplace ensuite par notre profil bleu.
         request.max_velocity_scaling_factor = 0.1
         request.max_acceleration_scaling_factor = 0.1
 
@@ -84,21 +84,21 @@ def main():
         trajectory = response.solution.joint_trajectory
         points = trajectory.points
 
-        print(f"Code resultat : {response.error_code.val}")
-        print(f"Fraction calculee : {response.fraction:.8f}")
-        print(f"Nombre de points : {len(points)}")
+        print(f"Result code : {response.error_code.val}")
+        print(f"Computed fraction : {response.fraction:.8f}")
+        print(f"Number of points : {len(points)}")
 
         if (
             response.error_code.val != 1
             or response.fraction < 1.0 - 1e-9
             or len(points) < 2
         ):
-            print("Approche incomplete : aucune execution.")
+            print("Incomplete approach: no execution was requested.")
             print("Conserver les journaux MoveIt pour le diagnostic.")
             return
 
         record = {
-            "description": "pre_place -> place, piece attachee",
+            "description": "PRE_PLACE -> PLACE, attached workpiece",
             "frame_id": data["frame_id"],
             "fraction": response.fraction,
             "joint_names": list(trajectory.joint_names),
@@ -123,9 +123,9 @@ def main():
             json.dumps(record, indent=2, allow_nan=False)
         )
 
-        print(f"Chemin sauvegarde : {filename}")
-        print("Timing provisoire : profil bleu pas encore applique.")
-        print("Aucun mouvement commande. Piece toujours attachee.")
+        print(f"Path saved: {filename}")
+        print("Temporary timing : blue profile not yet applied.")
+        print("No motion was commanded. The workpiece remains attached.")
 
     finally:
         node.destroy_node()

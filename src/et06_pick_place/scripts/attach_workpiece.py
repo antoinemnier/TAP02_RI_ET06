@@ -38,14 +38,14 @@ def attach_piece(node):
 
     if attached:
         if attached[0].link_name != "tool0":
-            raise RuntimeError("La piece est attachee a un autre lien.")
-        print("La piece est deja attachee a tool0.")
+            raise RuntimeError("The workpiece is attached to another link.")
+        print("The workpiece is already attached to tool0.")
         return scene
 
     world_ids = [obj.id for obj in scene.world.collision_objects]
 
     if "et06_piece" not in world_ids:
-        raise RuntimeError("La piece est absente du monde.")
+        raise RuntimeError("The workpiece is missing from the world.")
 
     obj = AttachedCollisionObject()
     obj.link_name = "tool0"
@@ -53,7 +53,7 @@ def attach_piece(node):
     obj.object.operation = CollisionObject.ADD
 
     # Prise virtuelle : seul tool0 est autorise ici.
-    # Aucun contact avec le support ou le reste du bras n'est autorise.
+    # No contact with the support or the rest of the arm is allowed.
     obj.touch_links = ["tool0"]
 
     request = ApplyPlanningScene.Request()
@@ -63,7 +63,7 @@ def attach_piece(node):
 
     response = call_service(node, writer, request)
     if not response.success:
-        raise RuntimeError("Application de l'attachement refusee.")
+        raise RuntimeError("The planning scene rejected the attachment.")
 
     scene = read_scene(node, reader)
 
@@ -77,10 +77,10 @@ def attach_piece(node):
     )
 
     if not attached_ok or still_in_world:
-        raise RuntimeError("Etat de scene inattendu apres attachement.")
+        raise RuntimeError("Unexpected planning-scene state after attachment.")
 
-    print("Attachement confirme : et06_piece -> tool0.")
-    print("La piece n'est plus un objet independant du monde.")
+    print("Attachment confirmed: et06_piece -> tool0.")
+    print("The workpiece is no longer an independent world object.")
     return scene
 
 
@@ -103,7 +103,7 @@ def main():
     node = Node("et06_attach_piece")
 
     try:
-        # Verifier la position avant toute modification de scene.
+        # Check the robot position before modifying the planning scene.
         check_position(node, data["joint_names"], target, 0.001)
 
         scene = attach_piece(node)
@@ -120,8 +120,8 @@ def main():
         response = call_service(node, client, request)
 
         print(
-            "Etat avec piece attachee : "
-            + ("VALIDE" if response.valid else "INVALIDE")
+            "State with attached workpiece: "
+            + ("VALID" if response.valid else "INVALID")
         )
 
         for contact in response.contacts:
@@ -130,8 +130,8 @@ def main():
                 f" / {contact.contact_body_2}"
             )
 
-        print("Aucun mouvement commande.")
-        print("La piece reste attachee a la fin du programme.")
+        print("No motion was commanded.")
+        print("The workpiece remains attached at the end of the program.")
 
     finally:
         node.destroy_node()

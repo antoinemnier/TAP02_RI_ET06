@@ -9,7 +9,7 @@ from scipy.interpolate import CubicSpline
 
 
 # ------------------------------------------------------------
-# 1. Lecture des arguments
+# 1. Reading des arguments
 # ------------------------------------------------------------
 
 if len(sys.argv) != 3:
@@ -24,7 +24,7 @@ case = sys.argv[2].lower()
 
 if motion not in ("pick", "place"):
     raise SystemExit(
-        "Mouvement incorrect : choisir 'pick' ou 'place'."
+        "Motion incorrect : choisir 'pick' ou 'place'."
     )
 
 if case not in ("red", "blue"):
@@ -34,7 +34,7 @@ if case not in ("red", "blue"):
 
 
 # ------------------------------------------------------------
-# 2. Fichiers et chemins
+# 2. Files and paths
 # ------------------------------------------------------------
 
 package_folder = Path(__file__).resolve().parents[1]
@@ -65,18 +65,18 @@ output_folder = package_folder / "results" / "retimed"
 output_folder.mkdir(parents=True, exist_ok=True)
 
 if not path_file.is_file():
-    raise SystemExit(f"Chemin articulaire introuvable : {path_file}")
+    raise SystemExit(f"Joint path not found : {path_file}")
 
 if not limits_file.is_file():
     raise SystemExit(f"Limites articulaires introuvables : {limits_file}")
 
-print(f"Mouvement : {motion}")
-print(f"Limites cartésiennes : {case}")
-print(f"Chemin lu : {path_file}")
+print(f"Motion : {motion}")
+print(f"Cartesian limits : {case}")
+print(f"Input path : {path_file}")
 
 
 # ------------------------------------------------------------
-# 3. Lecture et interpolation du chemin q(s)
+# 3. Read and interpolate the path q(s)
 # ------------------------------------------------------------
 
 path_data = np.loadtxt(
@@ -95,16 +95,16 @@ s_path = path_data[:, 0]
 q_path = path_data[:, 1:7]
 
 if not np.all(np.isfinite(path_data)):
-    raise SystemExit("Le chemin contient une valeur non finie.")
+    raise SystemExit("The path contains a non-finite value.")
 
 if not np.all(np.diff(s_path) > 0):
     raise SystemExit(
-        "La progression s du chemin doit être strictement croissante."
+        "The path coordinate s must be strictly increasing."
     )
 
 if abs(s_path[0]) > 1e-9 or abs(s_path[-1] - 1.0) > 1e-9:
     raise SystemExit(
-        "La progression du chemin doit commencer à 0 et finir à 1."
+        "The path coordinate must start at 0 and end at 1."
     )
 
 # Spline géométrique commune aux deux lois temporelles.
@@ -138,18 +138,18 @@ acceleration_limits = acceleration_scale * np.array([
 ])
 
 print(
-    "Limites articulaires effectives de vitesse [rad/s] :"
+    "Effective joint velocity limits [rad/s] :"
 )
 print(velocity_limits)
 
 print(
-    "Limites articulaires effectives d'acceleration [rad/s2] :"
+    "Effective joint acceleration limits [rad/s2] :"
 )
 print(acceleration_limits)
 
 
 # ------------------------------------------------------------
-# 5. Limites cartésiennes du cahier des charges
+# 5. Cartesian limits du cahier des charges
 # ------------------------------------------------------------
 
 path_length = 0.10
@@ -186,17 +186,17 @@ initial_duration = 1.05 * max(
 )
 
 print(
-    f"Duree minimale cubique : "
+    f"Minimum cubic duration : "
     f"{minimum_cubic_duration:.6f} s"
 )
 
 print(
-    f"Duree minimale quintique : "
+    f"Minimum quintic duration : "
     f"{minimum_quintic_duration:.6f} s"
 )
 
 print(
-    f"Duree commune initiale : "
+    f"Initial common duration : "
     f"{initial_duration:.6f} s"
 )
 
@@ -245,7 +245,7 @@ def evaluate(profile, duration):
     else:
         raise ValueError(f"Profil inconnu : {profile}")
 
-    # Protection contre de très petites erreurs numériques.
+    # Protection against very small numerical errors.
     s = np.clip(s, 0.0, 1.0)
 
     q = path_spline(s)
@@ -283,7 +283,7 @@ for profile in ("cubic", "quintic"):
     )
 
     # Si la durée est multipliée par k :
-    # - la vitesse est divisée par k ;
+    # - velocity is divided by k ;
     # - l'accélération est divisée par k².
     required_factors[profile] = max(
         1.0,
@@ -292,14 +292,14 @@ for profile in ("cubic", "quintic"):
     )
 
     print(
-        f"\n{profile}, a la duree commune initiale :"
+        f"\n{profile}, at the initial common duration :"
     )
     print(
-        "  Rapport maximal vitesse / limite : "
+        "  Maximum velocity-to-limit ratio : "
         f"{velocity_ratio:.6f}"
     )
     print(
-        "  Rapport maximal acceleration / limite : "
+        "  Maximum acceleration-to-limit ratio : "
         f"{acceleration_ratio:.6f}"
     )
 
@@ -321,7 +321,7 @@ else:
     )
 
 print(
-    f"\nDuree commune finale : {final_duration:.6f} s"
+    f"\nFinal common duration : {final_duration:.6f} s"
 )
 
 
@@ -360,25 +360,25 @@ for profile in ("cubic", "quintic"):
         peak_acceleration / acceleration_limits
     )
 
-    print(f"\n{profile}, apres ajustement :")
+    print(f"\n{profile}, after adjustment :")
 
     print(
-        "  Vitesses maximales par joint [rad/s] :"
+        "  Maximum velocities per joint [rad/s] :"
     )
     print(peak_velocity)
 
     print(
-        "  Accelerations maximales par joint [rad/s2] :"
+        "  Maximum accelerations per joint [rad/s2] :"
     )
     print(peak_acceleration)
 
     print(
-        "  Rapport final vitesse / limite : "
+        "  Final velocity-to-limit ratio : "
         f"{velocity_ratio:.6f}"
     )
 
     print(
-        "  Rapport final acceleration / limite : "
+        "  Final acceleration-to-limit ratio : "
         f"{acceleration_ratio:.6f}"
     )
 
@@ -406,6 +406,6 @@ for profile in ("cubic", "quintic"):
     print(f"  Fichier : {output_file}")
 
 
-print("\nCalcul hors ligne uniquement.")
-print("Aucune execution de mouvement.")
+print("\nOffline computation only.")
+print("No motion was executed.")
 

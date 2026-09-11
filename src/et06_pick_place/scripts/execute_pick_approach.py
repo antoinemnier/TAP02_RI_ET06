@@ -30,17 +30,17 @@ def current_positions(node, names):
     )
 
     if not ok:
-        raise RuntimeError("Aucun etat articulaire recu.")
+        raise RuntimeError("No joint state was received.")
 
     positions = dict(zip(message.name, message.position))
 
     if not all(name in positions for name in names):
-        raise RuntimeError("Etat articulaire incomplet.")
+        raise RuntimeError("The received joint state is incomplete.")
 
     q = [float(positions[name]) for name in names]
 
     if not all(math.isfinite(value) for value in q):
-        raise RuntimeError("Position articulaire non finie.")
+        raise RuntimeError("A joint position is not finite.")
 
     return q
 
@@ -48,10 +48,10 @@ def current_positions(node, names):
 def check_position(node, names, target, tolerance):
     actual = current_positions(node, names)
     error = max(abs(a - b) for a, b in zip(actual, target))
-    print(f"Ecart articulaire maximal : {error:.8f} rad", flush=True)
+    print(f"Maximum joint error : {error:.8f} rad", flush=True)
 
     if error > tolerance:
-        raise RuntimeError("Le robot n'est pas a la position attendue.")
+        raise RuntimeError("The robot is not at the expected position.")
 
 
 def execute(node, client, trajectory):
@@ -66,7 +66,7 @@ def execute(node, client, trajectory):
     handle = future.result()
 
     if handle is None or not handle.accepted:
-        raise RuntimeError("Trajectoire refusee par MoveIt.")
+        raise RuntimeError("MoveIt rejected the trajectory.")
 
     try:
         future = handle.get_result_async()
@@ -74,13 +74,13 @@ def execute(node, client, trajectory):
         result = future.result()
 
         if result is None:
-            raise RuntimeError("Aucun resultat d'execution.")
+            raise RuntimeError("No execution result was received.")
 
         code = result.result.error_code.val
-        print(f"Code execution : {code}", flush=True)
+        print(f"Execution result code : {code}", flush=True)
 
         if result.status != 4 or code != 1:
-            raise RuntimeError("Execution non terminee avec succes.")
+            raise RuntimeError("Execution did not complete successfully.")
 
     except BaseException:
         # Demande d'annulation si le programme est interrompu.
@@ -99,7 +99,7 @@ def main():
 
     expected = [f"joint_{j}" for j in range(1, 7)]
     if names != expected:
-        raise RuntimeError("Verifier l'ordre des articulations du CSV.")
+        raise RuntimeError("Check l'ordre des articulations du CSV.")
 
     filename = folder / "results/retimed/quintic_red_joints.csv"
     with filename.open() as file:
@@ -121,11 +121,11 @@ def main():
 
         values = point.positions + point.velocities + point.accelerations
         if not all(math.isfinite(v) for v in values) or not math.isfinite(t):
-            raise RuntimeError("Valeur non finie dans le CSV.")
+            raise RuntimeError("The CSV contains a non-finite value.")
 
         ns = round(t * 1_000_000_000)
         if ns < 0 or ns <= previous_ns:
-            raise RuntimeError("Temps invalides dans le CSV.")
+            raise RuntimeError("The CSV contains invalid timestamps.")
 
         point.time_from_start.sec = ns // 1_000_000_000
         point.time_from_start.nanosec = ns % 1_000_000_000
@@ -146,10 +146,10 @@ def main():
         home_error = max(
             abs(a - b) for a, b in zip(start, data["home"]["joints"])
         )
-        print(f"Ecart a HOME : {home_error:.6f} rad")
+        print(f"Error relative to HOME : {home_error:.6f} rad")
 
         if home_error > 0.01:
-            print("Attention : le transfert ne commencera pas en HOME.")
+            print("Warning: the transfer will not start at HOME.")
 
         request = GetMotionPlan.Request()
         req = request.motion_plan_request
@@ -177,43 +177,43 @@ def main():
 
         req.goal_constraints = [goal]
 
-        print("Planification du transfert...", flush=True)
+        print("Planning the transfer...", flush=True)
         response = call_service(node, planner, request)
         plan = response.motion_plan_response
 
         if plan.error_code.val != 1 or not plan.trajectory.joint_trajectory.points:
             raise RuntimeError(
-                f"Planification echouee : code {plan.error_code.val}"
+                f"Planning failed : code {plan.error_code.val}"
             )
 
-        print("Transfert calcule.")
-        print(f"Approche : {len(rows)} points, duree {t:.6f} s.")
-        print("SIMULATION UNIQUEMENT. Ne pas modifier la scene.")
+        print("Transfer plan computed.")
+        print(f"Approach: {len(rows)} points, duration {t:.6f} s.")
+        print("SIMULATION ONLY. Do not modify the planning scene.")
 
         if os.environ.get("ET06_AUTO_CONFIRM") != "1":
             answer = input(
-                "Taper OUI pour executer les deux mouvements : "
+                "Type YES to execute both motions : "
             )
-            if answer.strip().upper() != "OUI":
-                raise RuntimeError("Execution annulee par l'utilisateur.")
+            if answer.strip().upper() != "YES":
+                raise RuntimeError("Execution cancelled by the user.")
         else:
-            print("Execution autorisee par le programme principal.")
+            print("Execution authorized by the main program.")
 
-        # Verifier que le robot n'a pas bouge pendant la confirmation.
+        # Check que le robot n'a pas bouge pendant la confirmation.
         check_position(node, names, start, 0.001)
 
-        print("Execution du transfert vers pre_pick...", flush=True)
+        print("Executing transfer to PRE_PICK...", flush=True)
         execute(node, executor, plan.trajectory)
 
-        # Verifier le raccord avant d'envoyer l'approche.
+        # Check le raccord avant d'envoyer l'approche.
         check_position(node, names, target, 0.001)
 
-        print("Execution de l'approche quintique...", flush=True)
+        print("Executing the quintic approach...", flush=True)
         execute(node, executor, approach)
 
         check_position(node, names, endpoint, 0.001)
-        print("Transfert et approche termines.")
-        print("Piece non attachee : fin du test 4A + 4B.")
+        print("Transfer and approach completed.")
+        print("Workpiece not attached: end of the 4A + 4B test.")
 
     finally:
         node.destroy_node()
@@ -225,8 +225,8 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nProgramme interrompu.")
+        print("\nProgram interrupted.")
         raise SystemExit(130)
     except Exception as error:
-        print(f"\nARRET : {error}")
+        print(f"\nSTOP : {error}")
         raise SystemExit(1)
