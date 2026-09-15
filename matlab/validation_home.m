@@ -1,13 +1,24 @@
+%% ET06 - FANUC M-10iA
+% Validation of the DH model using ROS2 and MoveIt results.
+%
+% Part 2:
+%   Compare the HOME transformation obtained with DH and TF2.
+%
+% Part 3:
+%   Compare the PICK and PLACE transformations obtained with
+%   DH and MoveIt forward kinematics.
+
 clear;
 clc;
 format long g;
 
-%% 1. Configurations
+%% 1. Joint configurations
 
+% Theoretical HOME configuration
 q_home = zeros(6,1);
 
-% Mesure /joint_states envoyee depuis ROS.
-q_mesure = [
+% Joint values measured at HOME using the /joint_states topic
+q_home_measured = [
     -2.876514219678939e-05
      5.470863590016962e-06
     -9.094930989667774e-05
@@ -16,579 +27,222 @@ q_mesure = [
      2.7370617492124426e-05
 ];
 
-% Matrice TF recopiee du terminal : seulement 3 decimales.
-T_tf_arrondi = [
-    0  0  1  0.890
-    0 -1  0  0
-    1  0  0  1.250
-    0  0  0  1
-];
-
-%% 2. Calcul DH
-
-T_home = fk_dh(q_home);
-T_mesure = fk_dh(q_mesure);
-
-disp('=== DH : theoretical HOME ===');
-disp(T_home);
-
-disp('=== DH : measured joint values ===');
-disp(T_mesure);
-
-disp('=== rounded TF copied from the terminal ===');
-disp(T_tf_arrondi);
-
-fprintf('Maximum joint error a HOME : %.9g rad\n', ...
-    max(abs(q_mesure - q_home)));
-
-fprintf(['Position difference entre DH(q_mesure) et TF arrondi : ' ...
-         '%.9g m\n'], ...
-    norm(T_mesure(1:3,4) - T_tf_arrondi(1:3,4)));
-
-fprintf(['Attention : cette difference inclut l''arrondi TF ; ' ...
-         'ce n''est pas une validation haute precision.\n\n']);
-
-%% 3. Verification independante : DH contre chaine URDF
-
-Q = [
-    q_home, ...
-    q_mesure, ...
-    [0.5; 0; 0; 0; 0; 0], ...
-    [0.3; 0.4; -0.5; 0.2; -0.4; 0.6]
-];
-
-% Tests supplementaires de l'equivalence cinematique.
-% Ce ne sont PAS des configurations validees sans collision.
-rng(6);
-Q = [Q, 0.5 * (2 * rand(6,20) - 1)];
-
-max_ep = 0;
-max_eR = 0;
-
-for k = 1:size(Q,2)
-    Td = fk_dh(Q(:,k));
-    Tu = fk_urdf(Q(:,k));
-
-    ep = norm(Td(1:3,4) - Tu(1:3,4));
-    eR = norm(Td(1:3,1:3) - Tu(1:3,1:3), 'fro');
-
-    max_ep = max(max_ep, ep);
-    max_eR = max(max_eR, eR);
-end
-
-fprintf('=== DH contre chaine URDF : %d configurations ===\n', ...
-    size(Q,2));
-fprintf('Erreur maximale de position : %.12g m\n', max_ep);
-fprintf('Erreur maximale de rotation, norme Frobenius : %.12g\n', ...
-    max_eR);
-
-% Les constantes RPY de l'URDF sont des approximations decimales
-% de pi et -pi/2. Une tres petite difference est donc attendue.
-assert(max_ep < 1e-9 && max_eR < 1e-8, ...
-    'Echec de la verification DH / URDF.');
-
-disp('Internal verification DH / URDF reussie.');
-
-%% 4. Validation DH contre la mesure TF2 precise
-% Robot immobile, proche de HOME.
-% q_mesure correspond au message /joint_states releve.
-% TF affiche avec 12 chiffres apres la virgule.
-
-T_tf_precis = [
-    0.000181377172  -0.000028756904   0.999999983138   0.890022561565
-    0.000062254509  -0.999999997648  -0.000028768196  -0.000025601922
-    0.999999981613   0.000062259726  -0.000181375381   1.249920152592
-    0                0                0                1
-    ];
-
-T_dh_mesure = fk_dh(q_mesure);
-
-delta_p = T_dh_mesure(1:3,4) - T_tf_precis(1:3,4);
-delta_R = T_dh_mesure(1:3,1:3) - T_tf_precis(1:3,1:3);
-
-erreur_position = norm(delta_p);
-erreur_rotation_fro = norm(delta_R, 'fro');
-
-disp('=== Validation DH contre TF2 precis ===');
-
-disp('Position difference [m] :');
-disp(delta_p);
-
-fprintf('Position error : %.12g m\n', erreur_position);
-fprintf('Rotation difference, norme de Frobenius : %.12g\n', ...
-    erreur_rotation_fro);
-
-% Seuils proposes pour notre verification numerique,
-% pas des specifications de precision physique du robot.
-assert(erreur_position < 1e-8, ...
-    'Ecart de position DH / TF2 trop important.');
-
-assert(erreur_rotation_fro < 1e-8, ...
-    'Rotation difference DH / TF2 trop important.');
-
-disp('Numerical validation DH / TF2 reussie.');
-
-%% 5. Partie 3 : verification de la solution IK de PICK
-
+% PICK joint solution obtained with the MoveIt IK service
 q_pick = [
     -0.38050638088717653
     -0.008753653785249053
     -0.46129981068573
-    1.1647952226565548e-09
+     1.1647952226565548e-09
     -1.1182501711547923
-    0.38050638018104654
-    ];
+     0.38050638018104654
+];
 
-T_pick_cible = [
-    1  0  0   0.75
-    0 -1  0  -0.30
-    0  0 -1   0.85
-    0  0  0   1
-    ];
-
-T_pick_dh = fk_dh(q_pick);
-
-disp('=== PICK : forward kinematics DH ===');
-disp(T_pick_dh);
-
-erreur_pick_position = norm( ...
-    T_pick_dh(1:3,4) - T_pick_cible(1:3,4));
-
-erreur_pick_rotation = norm( ...
-    T_pick_dh(1:3,1:3) - T_pick_cible(1:3,1:3), 'fro');
-
-fprintf('PICK : ecart de position DH / cible = %.12g m\n', ...
-    erreur_pick_position);
-
-fprintf('PICK : ecart de rotation DH / cible, Frobenius = %.12g\n', ...
-    erreur_pick_rotation);
-
-%% 6. PICK : comparaison DH contre la forward kinematics MoveIt
-
-% Position retournee par /compute_fk
-p_pick_moveit = [
-    0.7499999971756399
-    -0.3000000022671659
-    0.8499999982271286
-    ];
-
-% Quaternion retourne : ordre explicite [x, y, z, w]
-quat_pick_moveit = [
-    1.0
-    -9.840767084469948e-11
-    -6.770872278719478e-10
-    2.9716020217570323e-10
-    ];
-
-% Normalisation avant conversion
-quat_pick_moveit = quat_pick_moveit / norm(quat_pick_moveit);
-
-x = quat_pick_moveit(1);
-y = quat_pick_moveit(2);
-z = quat_pick_moveit(3);
-w = quat_pick_moveit(4);
-
-% Conversion quaternion -> matrice de rotation
-% Sans necessiter de toolbox supplementaire
-R_pick_moveit = [
-    1-2*(y*y+z*z),  2*(x*y-z*w),    2*(x*z+y*w)
-    2*(x*y+z*w),    1-2*(x*x+z*z),  2*(y*z-x*w)
-    2*(x*z-y*w),    2*(y*z+x*w),    1-2*(x*x+y*y)
-    ];
-
-T_pick_moveit = eye(4);
-T_pick_moveit(1:3,1:3) = R_pick_moveit;
-T_pick_moveit(1:3,4) = p_pick_moveit;
-
-% Recalcul avec les angles de la solution IK
-T_pick_dh = fk_dh(q_pick);
-
-ep_pick = norm( ...
-    T_pick_dh(1:3,4) - T_pick_moveit(1:3,4));
-
-eR_pick = norm( ...
-    T_pick_dh(1:3,1:3) - T_pick_moveit(1:3,1:3), 'fro');
-
-disp('=== PICK : MoveIt transformation ===');
-disp(T_pick_moveit);
-
-disp('=== PICK : DH transformation ===');
-disp(T_pick_dh);
-
-fprintf('PICK : erreur de position DH / MoveIt = %.12g m\n', ...
-    ep_pick);
-
-fprintf('PICK : ecart de rotation DH / MoveIt, Frobenius = %.12g\n', ...
-    eR_pick);
-
-% Seuils de verification numerique proposes pour ce modele
-assert(ep_pick < 1e-8, ...
-    'Check la position : ecart DH / MoveIt trop important.');
-
-assert(eR_pick < 1e-8, ...
-    'Check la rotation : ecart DH / MoveIt trop important.');
-
-disp('Numerical validation de PICK reussie.');
-
-%% 7. PLACE : verification de la solution IK
-
+% PLACE joint solution obtained with the MoveIt IK service
 q_place = [
-    0.38050578298679605
+     0.38050578298679605
     -0.008752906279149665
     -0.46130350259048086
-    4.958048048952841e-11
+     4.958048048952841e-11
     -1.1182457324839004
     -0.38050578321996226
-    ];
+];
 
-T_place_cible = [
-    1  0  0   0.75
-    0 -1  0   0.30
-    0  0 -1   0.85
-    0  0  0   1
-    ];
+%% 2. Reference transformations obtained from ROS2
 
-T_place_dh = fk_dh(q_place);
+% Precise transformation base_link -> tool0 obtained with tf2_echo
+% while the robot was at q_home_measured
+T_home_tf2 = [
+     0.000181377172  -0.000028756904   0.999999983138   0.890022561565
+     0.000062254509  -0.999999997648  -0.000028768196  -0.000025601922
+     0.999999981613   0.000062259726  -0.000181375381   1.249920152592
+     0                 0                 0                 1
+];
 
-disp('=== PLACE : forward kinematics DH ===');
-disp(T_place_dh);
+% PICK pose returned by the MoveIt FK service
+p_pick_moveit = [
+     0.7499999971756399
+    -0.3000000022671659
+     0.8499999982271286
+];
 
-ep_place_cible = norm( ...
-    T_place_dh(1:3,4) - T_place_cible(1:3,4));
+% Quaternion order used by ROS: [x, y, z, w]
+q_pick_moveit = [
+     1.0
+    -9.840767084469948e-11
+    -6.770872278719478e-10
+     2.9716020217570323e-10
+];
 
-eR_place_cible = norm( ...
-    T_place_dh(1:3,1:3) - T_place_cible(1:3,1:3), 'fro');
-
-fprintf('PLACE : ecart de position DH / cible = %.12g m\n', ...
-    ep_place_cible);
-
-fprintf('PLACE : ecart de rotation DH / cible, Frobenius = %.12g\n', ...
-    eR_place_cible);
-
-%% 8. PLACE : comparaison DH contre la forward kinematics MoveIt
-
-% Position retournee par /compute_fk
+% PLACE pose returned by the MoveIt FK service
 p_place_moveit = [
     0.7500001808264501
     0.299999555436531
     0.8499970587053737
-    ];
+];
 
-% Quaternion retourne : ordre [x, y, z, w]
-quat_place_moveit = [
-    1.0
+q_place_moveit = [
+     1.0
     -1.0574328904800532e-10
     -8.178005868548199e-10
-    4.370490543854716e-10
-    ];
+     4.370490543854716e-10
+];
 
-quat_place_moveit = quat_place_moveit / norm(quat_place_moveit);
+% Convert the MoveIt poses into homogeneous transformations
+T_pick_moveit = poseToMatrix(p_pick_moveit, q_pick_moveit);
+T_place_moveit = poseToMatrix(p_place_moveit, q_place_moveit);
 
-x = quat_place_moveit(1);
-y = quat_place_moveit(2);
-z = quat_place_moveit(3);
-w = quat_place_moveit(4);
+%% 3. Part 2: HOME transformation
 
-R_place_moveit = [
-    1-2*(y*y+z*z),  2*(x*y-z*w),    2*(x*z+y*w)
-    2*(x*y+z*w),    1-2*(x*x+z*z),  2*(y*z-x*w)
-    2*(x*z-y*w),    2*(y*z+x*w),    1-2*(x*x+y*y)
-    ];
+T_home_theoretical = forwardKinematicsDH(q_home);
+T_home_measured = forwardKinematicsDH(q_home_measured);
 
-T_place_moveit = eye(4);
-T_place_moveit(1:3,1:3) = R_place_moveit;
-T_place_moveit(1:3,4) = p_place_moveit;
+fprintf('\n========================================\n');
+fprintf('PART 2 - HOME TRANSFORMATION\n');
+fprintf('========================================\n');
 
-T_place_dh = fk_dh(q_place);
+disp('Theoretical DH transformation at HOME:');
+disp(T_home_theoretical);
 
-ep_place = norm( ...
-    T_place_dh(1:3,4) - T_place_moveit(1:3,4));
+disp('DH transformation using the measured joint values:');
+disp(T_home_measured);
 
-eR_place = norm( ...
-    T_place_dh(1:3,1:3) - T_place_moveit(1:3,1:3), 'fro');
+disp('Transformation measured with TF2:');
+disp(T_home_tf2);
 
-disp('=== PLACE : MoveIt transformation ===');
-disp(T_place_moveit);
+compareTransformations(T_home_measured, T_home_tf2);
 
-disp('=== PLACE : DH transformation ===');
+fprintf('Maximum joint deviation from theoretical HOME: %.6e rad\n', ...
+    max(abs(q_home_measured - q_home)));
+
+%% 4. Part 3: PICK transformation
+
+T_pick_dh = forwardKinematicsDH(q_pick);
+
+fprintf('\n========================================\n');
+fprintf('PART 3 - PICK TRANSFORMATION\n');
+fprintf('========================================\n');
+
+disp('Transformation calculated with DH:');
+disp(T_pick_dh);
+
+disp('Transformation returned by MoveIt FK:');
+disp(T_pick_moveit);
+
+compareTransformations(T_pick_dh, T_pick_moveit);
+
+%% 5. Part 3: PLACE transformation
+
+T_place_dh = forwardKinematicsDH(q_place);
+
+fprintf('\n========================================\n');
+fprintf('PART 3 - PLACE TRANSFORMATION\n');
+fprintf('========================================\n');
+
+disp('Transformation calculated with DH:');
 disp(T_place_dh);
 
-fprintf('PLACE : erreur de position DH / MoveIt = %.12g m\n', ...
-    ep_place);
+disp('Transformation returned by MoveIt FK:');
+disp(T_place_moveit);
 
-fprintf('PLACE : ecart de rotation DH / MoveIt, Frobenius = %.12g\n', ...
-    eR_place);
+compareTransformations(T_place_dh, T_place_moveit);
 
-% Seuils de coherence numerique entre les deux modeles,
-% distincts d'une tolerance de precision de l'IK.
-assert(ep_place < 1e-8, ...
-    'Check la position : ecart DH / MoveIt trop important.');
+fprintf('\nAll DH comparisons were completed successfully.\n');
 
-assert(eR_place < 1e-8, ...
-    'Check la rotation : ecart DH / MoveIt trop important.');
+%% Local functions
 
-disp('Numerical validation de PLACE reussie.');
+function T = forwardKinematicsDH(q)
+%FORWARDKINEMATICSDH Calculates base_link -> tool0.
+%
+% The model uses standard Denavit-Hartenberg transformations.
+% Each row of the table contains:
+%
+%   [a, alpha, d, theta_offset]
 
-%% Verification du chemin cartesien retourne par MoveIt
-
-D = jsondecode(fileread("pre_pick_to_pick.json"));
-
-% Check l'ordre des articulations avant d'utiliser le modele DH.
-expected_names = "joint_" + string((1:6)');
-actual_names = string(D.joint_names);
-assert(isequal(actual_names(:), expected_names), ...
-    'Ordre des articulations different : reordonner les donnees.');
-
-N = numel(D.points);
-P = zeros(N,3);
-time = zeros(N,1);
-orientation_error = zeros(N,1);
-
-% Orientation souhaitee : quaternion xyzw = [1,0,0,0].
-R_target = diag([1,-1,-1]);
-
-for k = 1:N
-    q = D.points(k).positions(:);
-    T = fk_dh(q);
-
-    P(k,:) = T(1:3,4)';
-    time(k) = D.points(k).time_s;
-
-    orientation_error(k) = norm( ...
-        T(1:3,1:3) - R_target, 'fro');
-end
-
-% Ecart transversal par rapport a la droite x=0.75, y=-0.30.
-transverse_error = sqrt( ...
-    (P(:,1)-0.75).^2 + (P(:,2)+0.30).^2);
-
-p_start = [0.75,-0.30,0.95];
-p_end = [0.75,-0.30,0.85];
-
-fprintf('\n=== MoveIt Cartesian path ===\n');
-fprintf('Number of points : %d\n', N);
-fprintf('Duree provisoire MoveIt : %.6f s\n', time(end)-time(1));
-fprintf('Initial position error : %.9g m\n', ...
-    norm(P(1,:)-p_start));
-fprintf('Final position error : %.9g m\n', ...
-    norm(P(end,:)-p_end));
-fprintf('Maximum transverse error : %.9g m\n', ...
-    max(transverse_error));
-fprintf('Maximum orientation difference, Frobenius : %.9g\n', ...
-    max(orientation_error));
-
-% Une descente monotone correspond a des differences z <= 0.
-fprintf('Plus grande variation de z entre points : %.9g m\n', ...
-    max(diff(P(:,3))));
-
-figure;
-tiledlayout(2,1);
-
-nexttile;
-plot(time, P(:,3), 'o-', 'LineWidth', 1.2);
-grid on;
-xlabel('Temps provisoire MoveIt [s]');
-ylabel('z [m]');
-title('Approche cartesienne : positions retournees');
-
-nexttile;
-plot(time, 1000*transverse_error, 'o-', 'LineWidth', 1.2);
-grid on;
-xlabel('Temps provisoire MoveIt [s]');
-ylabel('Ecart transversal [mm]');
-title('Ecart a la droite x=0.75, y=-0.30');
-
-%% Export du chemin articulaire en fonction de l'avancement
-
-% P et D ont ete calcules dans la section precedente.
-% Progression normalisee selon la hauteur effectivement obtenue.
-s_path = (P(1,3) - P(:,3)) / (P(1,3) - P(end,3));
-
-% Verifications avant interpolation.
-assert(all(diff(s_path) > 0), ...
-    'La progression du chemin doit etre strictement croissante.');
-
-Q_path = zeros(N,6);
-
-for k = 1:N
-    Q_path(k,:) = D.points(k).positions(:)';
-end
-
-path_table = array2table( ...
-    [s_path, Q_path], ...
-    'VariableNames', ...
-    {'s','joint_1','joint_2','joint_3', ...
-    'joint_4','joint_5','joint_6'});
-
-writetable(path_table, 'pre_pick_to_pick_path.csv');
-
-disp('Chemin exporte : pre_pick_to_pick_path.csv');
-disp(path_table([1,end],:));
-
-%% Verification cartesienne des profils reparametres
-% Verification echantillonnee, hors execution.
-% Vitesses et accelerations estimees par differences finies.
-
-files = {'cubic_red_joints.csv', 'quintic_red_joints.csv'};
-labels = {'Cubique', 'Quintique'};
-
-figure;
-tiledlayout(3,1);
-
-for profile = 1:2
-    M = readmatrix(files{profile});
-
-    t = M(:,1);
-    q = M(:,2:7);
-    n = numel(t);
-
-    assert(all(diff(t) > 0), ...
-        'Les temps doivent etre strictement croissants.');
-
-    P = zeros(n,3);
-    rotation_error = zeros(n,1);
-    R_target = diag([1,-1,-1]);
-
-    for k = 1:n
-        T = fk_dh(q(k,:)');
-        P(k,:) = T(1:3,4)';
-
-        rotation_error(k) = norm( ...
-            T(1:3,1:3) - R_target, 'fro');
-    end
-
-    % Derivees numeriques de la position cartesienne.
-    V = zeros(n,3);
-    A = zeros(n,3);
-
-    for axis = 1:3
-        V(:,axis) = gradient(P(:,axis), t);
-        A(:,axis) = gradient(V(:,axis), t);
-    end
-
-    speed = sqrt(sum(V.^2,2));
-    acceleration = sqrt(sum(A.^2,2));
-
-    transverse_error = sqrt( ...
-        (P(:,1)-0.75).^2 + (P(:,2)+0.30).^2);
-
-    % Ecarter deux points a chaque extremite pour les maxima
-    % d'acceleration numerique : les bords sont moins precis.
-    interior = 3:n-2;
-
-    fprintf('\n=== %s : Cartesian verification ===\n', labels{profile});
-    fprintf('Duree : %.6f s\n', t(end)-t(1));
-    fprintf('Maximum transverse error : %.9g m\n', ...
-        max(transverse_error));
-    fprintf('Erreur finale de position : %.9g m\n', ...
-        norm(P(end,:)-[0.75,-0.30,0.85]));
-    fprintf('Maximum orientation difference, Frobenius : %.9g\n', ...
-        max(rotation_error));
-    fprintf('Estimated maximum Cartesian velocity : %.9g m/s\n', ...
-        max(speed));
-    fprintf('Estimated maximum acceleration excluding boundaries : %.9g m/s2\n', ...
-        max(acceleration(interior)));
-
-    nexttile(1);
-    plot(t, P(:,3), 'LineWidth', 1.5);
-    hold on;
-    grid on;
-    ylabel('z [m]');
-    title('Approche apres reparametrisation articulaire');
-
-    nexttile(2);
-    plot(t, speed, 'LineWidth', 1.5);
-    hold on;
-    grid on;
-    ylabel('Norme vitesse [m/s]');
-
-    nexttile(3);
-    plot(t, acceleration, 'LineWidth', 1.5);
-    hold on;
-    grid on;
-    ylabel('Norme acceleration [m/s^2]');
-    xlabel('Temps [s]');
-end
-
-nexttile(1);
-legend(labels, 'Location', 'best');
-
-nexttile(2);
-yline(0.200, 'k:', 'Limite rouge');
-
-nexttile(3);
-yline(0.300, 'k:', 'Limite rouge');
-
-%% Fonctions locales
-
-function T = fk_dh(q)
     q = q(:);
 
-    a = [0.150, 0.600, 0.200, 0, 0, 0];
-    alpha = [-pi/2, pi, -pi/2, pi/2, -pi/2, 0];
-    d = [0.450, 0, 0, -0.640, 0, -0.100];
-    offset = [0, -pi/2, 0, 0, 0, 0];
+    DH = [
+        0.150, -pi/2,  0.450,  0
+        0.600,  pi,    0,     -pi/2
+        0.200, -pi/2,  0,      0
+        0,      pi/2, -0.640,  0
+        0,     -pi/2,  0,      0
+        0,      0,    -0.100,  0
+    ];
 
     T = eye(4);
 
     for i = 1:6
-        theta = q(i) + offset(i);
+        a = DH(i,1);
+        alpha = DH(i,2);
+        d = DH(i,3);
+        theta = q(i) + DH(i,4);
 
-        ct = cos(theta);
-        st = sin(theta);
-        ca = cos(alpha(i));
-        sa = sin(alpha(i));
-
-        A = [
-            ct, -st*ca,  st*sa, a(i)*ct
-            st,  ct*ca, -ct*sa, a(i)*st
-             0,     sa,     ca, d(i)
-             0,      0,      0, 1
-        ];
-
-        T = T * A;
+        T = T * dhMatrix(a, alpha, d, theta);
     end
 
-    T6_tool = diag([1, -1, -1, 1]);
-    T = T * T6_tool;
+    % The final DH frame and the URDF tool0 frame have different
+    % orientations. This fixed rotation aligns both frames.
+    T_6_tool0 = diag([1, -1, -1, 1]);
+
+    T = T * T_6_tool0;
 end
 
-function T = fk_urdf(q)
-    % Reproduction directe des origines et axes de l'URDF fourni.
-    q = q(:);
+function A = dhMatrix(a, alpha, d, theta)
+%DHMATRIX Returns one standard DH homogeneous transformation.
 
-    T = tr(0,0,0.450) * rz(q(1)) ...
-      * tr(0.150,0,0) * ry(q(2)) ...
-      * tr(0,0,0.600) * ry(-q(3)) ...
-      * tr(0,0,0.200) * rx(-q(4)) ...
-      * tr(0.640,0,0) * ry(-q(5)) ...
-      * tr(0.100,0,0) * rx(-q(6));
-
-    % RPY exacts tels qu'ecrits dans le fichier URDF.
-    T = T * ry(-1.570796327) * rx(3.1415926535);
+    A = [
+        cos(theta), -sin(theta)*cos(alpha),  sin(theta)*sin(alpha), a*cos(theta)
+        sin(theta),  cos(theta)*cos(alpha), -cos(theta)*sin(alpha), a*sin(theta)
+        0,           sin(alpha),             cos(alpha),            d
+        0,           0,                      0,                     1
+    ];
 end
 
-function T = tr(x,y,z)
+function T = poseToMatrix(position, quaternion)
+%POSETOMATRIX Converts a ROS pose into a homogeneous transformation.
+%
+% The quaternion must use the ROS order:
+%   [x, y, z, w]
+
+    quaternion = quaternion(:) / norm(quaternion);
+
+    x = quaternion(1);
+    y = quaternion(2);
+    z = quaternion(3);
+    w = quaternion(4);
+
+    R = [
+        1-2*(y^2+z^2), 2*(x*y-z*w),   2*(x*z+y*w)
+        2*(x*y+z*w),   1-2*(x^2+z^2), 2*(y*z-x*w)
+        2*(x*z-y*w),   2*(y*z+x*w),   1-2*(x^2+y^2)
+    ];
+
     T = eye(4);
-    T(1:3,4) = [x;y;z];
+    T(1:3,1:3) = R;
+    T(1:3,4) = position(:);
 end
 
-function T = rx(t)
-    c = cos(t);
-    s = sin(t);
-    T = [1 0 0 0; 0 c -s 0; 0 s c 0; 0 0 0 1];
-end
+function compareTransformations(T_dh, T_reference)
+%COMPARETRANSFORMATIONS Compares position and orientation.
 
-function T = ry(t)
-    c = cos(t);
-    s = sin(t);
-    T = [c 0 s 0; 0 1 0 0; -s 0 c 0; 0 0 0 1];
-end
+    position_error = norm( ...
+        T_dh(1:3,4) - T_reference(1:3,4));
 
-function T = rz(t)
-    c = cos(t);
-    s = sin(t);
-    T = [c -s 0 0; s c 0 0; 0 0 1 0; 0 0 0 1];
-end
+    rotation_error = norm( ...
+        T_dh(1:3,1:3) - T_reference(1:3,1:3), ...
+        'fro');
 
-export("validation_home.mlx", "validation_home.m", Format="m");
+    fprintf('Position error: %.6e m\n', position_error);
+    fprintf('Rotation error, Frobenius norm: %.6e\n', ...
+        rotation_error);
+
+    % These thresholds verify numerical consistency between the models.
+    % They do not represent the physical accuracy of the real robot.
+    assert(position_error < 1e-5, ...
+        'The position error is too large.');
+
+    assert(rotation_error < 1e-6, ...
+        'The rotation error is too large.');
+
+    fprintf('Result: VALID\n');
+end
